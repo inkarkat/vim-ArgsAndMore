@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - ingocollections.vim autoload script (for :ArgsNegated)
+"   - ingosearch.vim autoload script (for :ArgsList)
 "
 " Copyright: (C) 2012 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -234,6 +235,31 @@ function! ArgsAndMore#ArgsNegated( bang, ... )
 	echomsg v:errmsg
 	echohl None
     endtry
+endfunction
+
+
+
+function! ArgsAndMore#ArgsList( isBang, ... )
+    let l:isFullPath = (a:0 || a:isBang)
+    if a:0
+	let l:pattern = ingosearch#WildcardExprToSearchPattern(a:1, '')
+    endif
+
+    echohl Title
+    echo '   cnt	file'
+    echohl None
+
+    for l:argIdx in range(argc())
+	let l:argFilespec = argv(l:argIdx)
+	if l:isFullPath
+	    let l:argFilespec = fnamemodify(l:argFilespec, ':p')
+	endif
+	if a:0 && (! a:isBang && l:argFilespec !~ l:pattern || a:isBang && l:argFilespec =~ l:pattern)
+	    continue
+	endif
+
+	echo (l:argIdx == argidx() ? '*' : ' ') . printf('%3d', l:argIdx) . "\t" . l:argFilespec
+    endfor
 endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
