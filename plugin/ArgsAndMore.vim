@@ -40,4 +40,8 @@ command! -nargs=1 -complete=expression ArgsFilter call ArgsAndMore#ArgsFilter(<q
 
 command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated('<bang>', <f-args>)
 
+" Note: Must use * instead of ?; otherwise (due to -complete=file), Vim
+" complains about globs with "E77: Too many file names".
+command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(<bang>0, <f-args>)
+
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
