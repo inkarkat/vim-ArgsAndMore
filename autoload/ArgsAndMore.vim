@@ -19,10 +19,13 @@ function! s:ErrorMsg( text )
     echomsg v:errmsg
     echohl None
 endfunction
-function! s:ExceptionMsg( exception )
+function! s:MsgFromException( exception )
     " v:exception contains what is normally in v:errmsg, but with extra
     " exception source info prepended, which we cut away.
-    call s:ErrorMsg(substitute(a:exception, '^Vim\%((\a\+)\)\=:', '', ''))
+    return substitute(a:exception, '^Vim\%((\a\+\)\=:', '', ''))
+endfunction
+function! s:ExceptionMsg( exception )
+    call s:ErrorMsg(s:MsgFromException(a:exception))
 endfunction
 
 function! ArgsAndMore#Windo( command )
@@ -96,6 +99,19 @@ endfunction
 function! s:Argdo( command )
     let l:restoreCmd = s:ArgumentListRestoreCommand()
 
+    " Temporarily turn off 'more', as this interferes with the "automated batch
+    " execution" the user has in mind: Arguments are processed until the screen
+    " is full of (e.g. file write) messages, then stops. <Enter> steps until the
+    " next message, <Space> a full page, "G" until the end. Unfortunately,
+    " turning 'more' off also disables the |g<| command, which may be useful to
+    " review the messages after the fact.
+    " Instead, we capture all error messages and make them available through a
+    " new :ArgdoErrors command.
+    let l:save_more = &more
+    set nomore
+
+    let s:errors = []
+
     " The :argdo must be enclosed in try..catch to handle errors from buffer
     " switches (e.g. "E37: No write since last change" when :set nohidden and
     " the command modified, but didn't update the buffer).
@@ -105,12 +121,20 @@ function! s:Argdo( command )
 	" see the error message.)
 	argdo
 	\   try |
+	\       let v:errmsg = '' |
 	\       execute a:command |
+	\       if ! empty(v:errmsg) |
+	\           call add(s:errors, [bufname(''), v:errmsg]) |
+	\       endif |
 	\   catch /^Vim\%((\a\+)\)\=:E/ |
+	\       call add(s:errors, [bufname(''), s:MsgFromException(v:exception)]) |
 	\       call s:ExceptionMsg(v:exception) |
 	\   endtry
     catch /^Vim\%((\a\+)\)\=:E/
+	call add(s:errors, [bufname(''), s:MsgFromException(v:exception)])
 	call s:ExceptionMsg(v:exception)
+    finally
+	let &more = l:save_more
     endtry
 
     silent! execute l:restoreCmd
@@ -175,6 +199,10 @@ function! ArgsAndMore#ArgdoWrapper( count, command )
 	    call s:ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	endtry
     endif
+endfunction
+
+function! ArgsAndMore#ArgdoErrors()
+    echomsg string(s:errors)
 endfunction
 
 
