@@ -10,7 +10,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	001	29-Jul-2012	file creation
+"	003	30-Jul-2012	ENH: Implement :CListToArgs et al.
+"	002	29-Jul-2012	Add :ArgsFilter, :ArgsList, :ArgsToQuickfix
+"				commands.
+"	001	29-Jul-2012	file creation from ingocommands.vim
 
 " Avoid installing twice or when in unsupported Vim version.
 if exists('g:loaded_ArgsAndMore') || (v:version < 700)
@@ -43,5 +46,12 @@ command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated(
 " Note: Must use * instead of ?; otherwise (due to -complete=file), Vim
 " complains about globs with "E77: Too many file names".
 command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(<bang>0, <f-args>)
+
+command! -bar ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix()
+
+command! -bar -bang  CListToArgs    call ArgsAndMore#QuickfixToArgs(getqflist(), 0, 0, '<bang>')
+command! -bar -count CListToArgsAdd call ArgsAndMore#QuickfixToArgs(getqflist(), 1, <count>, '')
+command! -bar -bang  LListToArgs    call ArgsAndMore#QuickfixToArgs(getloclist(0), 0, 0, '<bang>')
+command! -bar -count LListToArgsAdd call ArgsAndMore#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
