@@ -1,0 +1,115 @@
+*ArgsAndMore.txt*       Apply commands to multiple buffers and manage the argument list.
+
+		       ARGS AND MORE    by Ingo Karkat
+							     *ArgsAndMore.vim*
+description			|ArgsAndMore-description|
+usage				|ArgsAndMore-usage|
+installation			|ArgsAndMore-installation|
+integration			|ArgsAndMore-integration|
+limitations			|ArgsAndMore-limitations|
+known problems			|ArgsAndMore-known-problems|
+todo				|ArgsAndMore-todo|
+history				|ArgsAndMore-history|
+
+==============================================================================
+DESCRIPTION					     *ArgsAndMore-description*
+
+This plugin ...
+
+HOW IT WORKS								     *
+
+SEE ALSO								     *
+
+RELATED WORKS								     *
+
+- The :ArgsNegated command was inspired by the following Stack Overflow
+  question:
+    http://stackoverflow.com/questions/11547662/how-can-i-negate-a-glob-in-vim
+
+==============================================================================
+USAGE							   *ArgsAndMore-usage*
+
+								      *:Windo*
+:Windo {cmd}		Execute {cmd} in each window, then return back to the
+			original one.
+								   *:Winbufdo*
+:Winbufdo {cmd}		Execute {cmd} in each different buffer shown in one of
+			windows in the current tab page, then return back to
+			the original one.
+								      *:Tabdo*
+:Tabdo {cmd}	        Execute {cmd} once in each tab page, then return back
+			to the original one.
+								   *:Tabwindo*
+:Tabwindo {cmd}		Execute {cmd} in each open window on each tab page,
+			then return back to the original one.
+								      *:Argdo*
+:[range]Argdo {cmd}	Execute {cmd} for each file in the argument list (or
+			the range of indices from the argument list), then
+			return back to the original file.
+			For example, to execute {cmd} on the remaining
+			arguments, use :.,$Argdo {cmd}
+
+								 *:ArgsFilter*
+:ArgsFilter {expr}	Apply the |filter()| of {expr} to the argument list,
+			and keep only those where {expr} yields true. This
+			allows you to |:argdelete| multiple arguments at once
+			or without specifying the full filename.
+								*:ArgsNegated*
+:ArgsNegated[!] {arglist}
+			Define all files except {arglist} as the new argument
+			list and edit the first one.
+
+								   *:ArgsList*
+:ArgsList[!] 	    	List each argument number and filespec in a neat list
+			(not just one after the other as |:args|. With [!],
+			expand all arguments to absolute filespecs.
+:ArgsList[!] {glob}	List each argument number and filespec that matches
+			(with [!]: does not match) {glob} in a neat list.
+			Matching and printing is done to the full filespec.
+							     *:ArgsToQuickfix*
+:ArgsToQuickfix		Show all arguments as a quickfix list.
+
+
+==============================================================================
+INSTALLATION					    *ArgsAndMore-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim ArgsAndMore.vba.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES					    *ArgsAndMore-dependencies*
+
+- Requires Vim 7.0 or higher.
+
+==============================================================================
+INTEGRATION					     *ArgsAndMore-integration*
+
+==============================================================================
+LIMITATIONS					     *ArgsAndMore-limitations*
+
+KNOWN PROBLEMS					  *ArgsAndMore-known-problems*
+
+TODO							    *ArgsAndMore-todo*
+
+IDEAS							   *ArgsAndMore-ideas*
+
+==============================================================================
+HISTORY							 *ArgsAndMore-history*
+
+GOAL
+First published version.
+
+0.01	26-Aug-2008
+Started development.
+
+==============================================================================
+Copyright: (C) 2012 Ingo Karkat
+The VIM LICENSE applies to this script; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
