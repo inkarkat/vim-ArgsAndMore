@@ -11,6 +11,10 @@
 "
 " REVISION	DATE		REMARKS
 "	002	30-Jul-2012	ENH: Implement :CListToArgs et al.
+"				ENH: Avoid the hit-enter prompt on :Argdo, do
+"				summary reporting. Add :ArgdoErrors and
+"				:ArgdoDeleteSuccessful to further analyse and
+"				filter the processed arguments.
 "	001	29-Jul-2012	file creation from ingocommands.vim
 
 function! s:ErrorMsg( text )
@@ -22,7 +26,7 @@ endfunction
 function! s:MsgFromException( exception )
     " v:exception contains what is normally in v:errmsg, but with extra
     " exception source info prepended, which we cut away.
-    return substitute(a:exception, '^Vim\%((\a\+\)\=:', '', ''))
+    return substitute(a:exception, '^Vim\%((\a\+)\)\=:', '', '')
 endfunction
 function! s:ExceptionMsg( exception )
     call s:ErrorMsg(s:MsgFromException(a:exception))
@@ -96,6 +100,19 @@ function! s:ArgumentListRestoreCommand()
 	return (argidx() + 1) . 'argument'
     endif
 endfunction
+let s:errors = []
+function! s:ArgExecute( command )
+    try
+	let v:errmsg = ''
+	execute a:command
+	if ! empty(v:errmsg)
+	    call add(s:errors, [argidx(), bufnr(''), v:errmsg])
+	endif
+    catch /^Vim\%((\a\+)\)\=:E/
+	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
+	call s:ExceptionMsg(v:exception)
+    endtry
+endfunction
 function! s:Argdo( command )
     let l:restoreCmd = s:ArgumentListRestoreCommand()
 
@@ -119,25 +136,24 @@ function! s:Argdo( command )
 	" Individual commands need to be enclosed in try..catch, or the :argdo
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
-	argdo
-	\   try |
-	\       let v:errmsg = '' |
-	\       execute a:command |
-	\       if ! empty(v:errmsg) |
-	\           call add(s:errors, [bufname(''), v:errmsg]) |
-	\       endif |
-	\   catch /^Vim\%((\a\+)\)\=:E/ |
-	\       call add(s:errors, [bufname(''), s:MsgFromException(v:exception)]) |
-	\       call s:ExceptionMsg(v:exception) |
-	\   endtry
+	argdo call s:ArgExecute(a:command)
     catch /^Vim\%((\a\+)\)\=:E/
-	call add(s:errors, [bufname(''), s:MsgFromException(v:exception)])
+	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
 	call s:ExceptionMsg(v:exception)
-    finally
-	let &more = l:save_more
     endtry
 
     silent! execute l:restoreCmd
+
+    if len(s:errors) == 1
+	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+    elseif len(s:errors) > 1
+	let l:argumentNumbers = sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')), 'ingocollections#numsort')
+	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
+    endif
+
+    " To avoid a hit-enter prompt, we have to restore this _after_ the summary
+    " error message.
+    let &more = l:save_more
 endfunction
 function! s:ArgIterate( startIdx, endIdx, command )
     let l:restoreCmd = s:ArgumentListRestoreCommand()
@@ -202,7 +218,42 @@ function! ArgsAndMore#ArgdoWrapper( count, command )
 endfunction
 
 function! ArgsAndMore#ArgdoErrors()
-    echomsg string(s:errors)
+    let l:argidxByError = {}
+    for [l:argidx, l:bufnr, l:errorMsg] in s:errors
+	let l:argidxByError[l:errorMsg] = get(l:argidxByError, l:errorMsg, []) + [[l:argidx, l:bufnr]]
+    endfor
+
+    for l:errorMsg in sort(keys(l:argidxByError))
+	echohl ErrorMsg
+	echo l:errorMsg
+	echohl None
+
+	for [l:argidx, l:bufnr] in l:argidxByError[l:errorMsg]
+	    echo printf('%3d %s', (l:argidx + 1), bufname(l:bufnr))
+	endfor
+    endfor
+endfunction
+function! ArgsAndMore#ArgdoDeleteSuccessful()
+    let l:originalArgNum = argc()
+    let l:argIdxDict = ingocollections#ToDict(map(copy(s:errors), 'v:val[0]'))
+    try
+	" To keep the indices valid, remove the arguments starting with the
+	" last argument.
+	for l:argIdx in range(l:originalArgNum - 1, 0, -1)
+	    if ! has_key(l:argIdxDict, l:argIdx)
+		execute (l:argIdx + 1) . 'argdelete'
+	    endif
+	endfor
+    catch /^Vim\%((\a\+)\)\=:E/
+	" v:exception contains what is normally in v:errmsg, but with extra
+	" exception source info prepended, which we cut away.
+	let v:errmsg = substitute(v:exception, '^Vim\%((\a\+)\)\=:', '', '')
+	echohl ErrorMsg
+	echomsg v:errmsg
+	echohl None
+    endtry
+
+    echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
 endfunction
 
 
