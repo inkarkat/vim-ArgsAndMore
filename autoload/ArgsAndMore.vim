@@ -1,8 +1,9 @@
 " ArgsAndMore.vim: Apply commands to multiple buffers and manage the argument list.
 "
 " DEPENDENCIES:
-"   - ingocollections.vim autoload script (for :ArgsNegated)
-"   - ingosearch.vim autoload script (for :ArgsList)
+"   - ingocollections.vim autoload script
+"   - ingofile.vim autoload script
+"   - ingosearch.vim autoload script
 "
 " Copyright: (C) 2012 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -127,6 +128,7 @@ function! s:Argdo( command )
     let l:save_more = &more
     set nomore
 
+    let s:range = []
     let s:errors = []
 
     " The :argdo must be enclosed in try..catch to handle errors from buffer
@@ -156,28 +158,48 @@ function! s:Argdo( command )
     let &more = l:save_more
 endfunction
 function! s:ArgIterate( startIdx, endIdx, command )
+    " Structure here like in s:Argdo().
+
     let l:restoreCmd = s:ArgumentListRestoreCommand()
 
-    " The :argdo must be enclosed in try..catch to handle errors from buffer
-    " switches (e.g. "E37: No write since last change" when :set nohidden and
-    " the command modified, but didn't update the buffer).
+    let l:save_more = &more
+    set nomore
+
+    let s:range = [a:startIdx, a:endIdx]
+    let s:errors = []
+
     try
-	" Individual commands need to be enclosed in try..catch, or the :argdo
-	" iteration will be aborted. (We can't use :silent! because we want to
-	" see the error message.)
 	for l:idx in range(a:startIdx, a:endIdx)
-	    execute l:idx . 'argument'
-	    try
-		execute a:command
-	    catch /^Vim\%((\a\+)\)\=:E/
-		call s:ExceptionMsg(v:exception)
-	    endtry
+	    " This is not :argdo; the printed error messages will be overwritten
+	    " by the messages resulting from the switch to the next argument. To
+	    " avoid this and keep both file changes as well as error messages
+	    " interspersed on the screen, capture the output from the file
+	    " change and :echo it ourselves.
+	    redir => l:nextArgumentOutput
+		silent execute l:idx . 'argument'
+	    redir END
+	    let l:nextArgumentOutput = substitute(l:nextArgumentOutput, '^\_s*', '', '')
+	    if ! empty(l:nextArgumentOutput)
+		echo l:nextArgumentOutput
+	    endif
+
+	    call s:ArgExecute(a:command)
 	endfor
     catch /^Vim\%((\a\+)\)\=:E/
+	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
 	call s:ExceptionMsg(v:exception)
     endtry
 
     silent! execute l:restoreCmd
+
+    if len(s:errors) == 1
+	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+    elseif len(s:errors) > 1
+	let l:argumentNumbers = sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')), 'ingocollections#numsort')
+	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
+    endif
+
+    let &more = l:save_more
 endfunction
 function! s:InterpretRange( rangeExpr )
     let l:range = a:rangeExpr
@@ -234,12 +256,19 @@ function! ArgsAndMore#ArgdoErrors()
     endfor
 endfunction
 function! ArgsAndMore#ArgdoDeleteSuccessful()
-    let l:originalArgNum = argc()
+    if empty(s:range)
+	let l:originalArgNum = argc()
+	let [l:startIdx, l:endIdx] = [0, l:originalArgNum - 1]
+    else
+	let [l:startIdx, l:endIdx] = s:range
+	let l:originalArgNum = l:endIdx - l:startIdx + 1
+    endif
+
     let l:argIdxDict = ingocollections#ToDict(map(copy(s:errors), 'v:val[0]'))
     try
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
-	for l:argIdx in range(l:originalArgNum - 1, 0, -1)
+	for l:argIdx in range(l:endIdx, l:startIdx, -1)
 	    if ! has_key(l:argIdxDict, l:argIdx)
 		execute (l:argIdx + 1) . 'argdelete'
 	    endif
