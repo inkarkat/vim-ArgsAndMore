@@ -10,7 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	001	29-Jul-2012	file creation
+"	002	30-Jul-2012	ENH: Implement :CListToArgs et al.
+"	001	29-Jul-2012	file creation from ingocommands.vim
 
 function! s:ErrorMsg( text )
     let v:errmsg = a:text
@@ -260,6 +261,75 @@ function! ArgsAndMore#ArgsList( isBang, ... )
 
 	echo (l:argIdx == argidx() ? '*' : ' ') . printf('%3d', l:argIdx) . "\t" . l:argFilespec
     endfor
+endfunction
+
+
+function! ArgsAndMore#ArgsToQuickfix()
+    silent doautocmd QuickFixCmdPre args | " Allow hooking into the quickfix update.
+    call setqflist(map(argv(), "{'filename': v:val, 'lnum': 1}"))
+    silent doautocmd QuickFixCmdPost args | " Allow hooking into the quickfix update.
+endfunction
+
+
+function! s:ExecuteWithoutWildignore( excommand, filespecs )
+"*******************************************************************************
+"* PURPOSE:
+"   Executes a:excommand with all a:filespecs passed as arguments while
+"   'wildignore' is temporarily  disabled. This allows to introduce filespecs to
+"   the argument list (:args ..., :argadd ...) which would normally be filtered
+"   by 'wildignore'.
+"* ASSUMPTIONS / PRECONDITIONS:
+"	? List of any external variable, control, or other element whose state affects this procedure.
+"* EFFECTS / POSTCONDITIONS:
+"	? List of the procedure's effect on each external variable, control, or other element.
+"* INPUTS:
+"   a:excommand	    ex command to be invoked
+"   a:filespecs	    List of filespecs.
+"* RETURN VALUES:
+"   none
+"*******************************************************************************
+    let l:save_wildignore = &wildignore
+    set wildignore=
+    try
+	execute a:excommand join(map(copy(a:filespecs), 'escapings#fnameescape(v:val)'), ' ')
+    finally
+	let &wildignore = l:save_wildignore
+    endtry
+endfunction
+function! ArgsAndMore#QuickfixToArgs( list, isArgAdd, count, bang )
+    if empty(a:list)
+	call s:ErrorMsg('No items')
+	return
+    endif
+
+    if ! a:isArgAdd && argc() > 0
+	silent execute printf('1,%dargdelete', argc())
+    endif
+
+    let l:addedBufnrs = {}
+    let l:filespecs = []
+    let l:existingArguments = ingocollections#ToDict(argv())
+    for l:bufnr in map(a:list, 'v:val.bufnr')
+	if has_key(l:addedBufnrs, l:bufnr)
+	    continue
+	endif
+	let l:addedBufnrs[l:bufnr] = 1
+
+	let l:filespec = bufname(l:bufnr)
+	if has_key(l:existingArguments, l:filespec)
+	    continue
+	endif
+
+	call add(l:filespecs, l:filespec)
+    endfor
+
+    if len(l:filespecs) == 0
+	echo printf('No new arguments in %d unique item%s', len(l:addedBufnrs), (len(l:addedBufnrs) == 1 ? '' : 's'))
+    else
+	let l:command = (a:isArgAdd ? (a:count ? a:count : '') . 'argadd' : 'args' . a:bang)
+	call s:ExecuteWithoutWildignore(l:command, l:filespecs)
+	echo printf('%d file%s%s: %s', len(l:filespecs), (len(l:filespecs) == 1 ? '' : 's'), (a:isArgAdd ? ' added' : ''), join(l:filespecs))
+    endif
 endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
