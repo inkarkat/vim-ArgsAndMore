@@ -11,11 +11,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	002	30-Jul-2012	ENH: Implement :CListToArgs et al.
+"   1.00.002	30-Jul-2012	ENH: Implement :CListToArgs et al.
 "				ENH: Avoid the hit-enter prompt on :Argdo, do
 "				summary reporting. Add :ArgdoErrors and
 "				:ArgdoDeleteSuccessful to further analyse and
 "				filter the processed arguments.
+"				ENH: Restore the argument index in addition to
+"				the current file on :Argdo.
 "	001	29-Jul-2012	file creation from ingocommands.vim
 
 function! s:ErrorMsg( text )
@@ -93,13 +95,18 @@ endfunction
 
 
 function! s:ArgumentListRestoreCommand()
+    " Restore the current argument index.
+    let l:restoreCommand = (argidx() + 1) . 'argument'
+
+    " When the current file isn't in the argument list, restore that buffer,
+    " too.
     " argidx() doesn't tell whether we're in the N'th file of the argument list,
     " or in an unrelated file. Need to compare the actual filenames to be sure.
     if argc() == 0 || argv(argidx()) !=# expand('%')
-	return bufnr('') . 'buffer'
-    else
-	return (argidx() + 1) . 'argument'
+	let l:restoreCommand .= '|' . bufnr('') . 'buffer'
     endif
+
+    return l:restoreCommand
 endfunction
 let s:errors = []
 function! s:ArgExecute( command )
@@ -115,7 +122,7 @@ function! s:ArgExecute( command )
     endtry
 endfunction
 function! s:Argdo( command )
-    let l:restoreCmd = s:ArgumentListRestoreCommand()
+    let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     " Temporarily turn off 'more', as this interferes with the "automated batch
     " execution" the user has in mind: Arguments are processed until the screen
@@ -144,7 +151,7 @@ function! s:Argdo( command )
 	call s:ExceptionMsg(v:exception)
     endtry
 
-    silent! execute l:restoreCmd
+    silent! execute l:restoreCommand
 
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
@@ -160,7 +167,7 @@ endfunction
 function! s:ArgIterate( startIdx, endIdx, command )
     " Structure here like in s:Argdo().
 
-    let l:restoreCmd = s:ArgumentListRestoreCommand()
+    let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     let l:save_more = &more
     set nomore
@@ -190,7 +197,7 @@ function! s:ArgIterate( startIdx, endIdx, command )
 	call s:ExceptionMsg(v:exception)
     endtry
 
-    silent! execute l:restoreCmd
+    silent! execute l:restoreCommand
 
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
