@@ -14,9 +14,12 @@ history				|ArgsAndMore-history|
 ==============================================================================
 DESCRIPTION					     *ArgsAndMore-description*
 
-This plugin ...
-
-HOW IT WORKS								     *
+This plugin supports you with batch processing many files by extending the
+built-in |:windo|, |:argdo|, etc. commands. You can filter the argument list,
+add files _not_ matching a pattern, convert between arguments and quickfix
+list, and apply arbitrary Ex commands (also partially) via |:Argdo|, then
+analyze any errors and retry on an argument list where the successfully
+processed arguments have been removed.
 
 SEE ALSO								     *
 
@@ -34,8 +37,8 @@ USAGE							   *ArgsAndMore-usage*
 			original one.
 								   *:Winbufdo*
 :Winbufdo {cmd}		Execute {cmd} in each different buffer shown in one of
-			windows in the current tab page, then return back to
-			the original one.
+			the windows in the current tab page (once per buffer),
+			then return back to the original one.
 								      *:Tabdo*
 :Tabdo {cmd}	        Execute {cmd} once in each tab page, then return back
 			to the original one.
@@ -43,17 +46,34 @@ USAGE							   *ArgsAndMore-usage*
 :Tabwindo {cmd}		Execute {cmd} in each open window on each tab page,
 			then return back to the original one.
 								      *:Argdo*
-:[range]Argdo {cmd}	Execute {cmd} for each file in the argument list (or
-			the range of indices from the argument list), then
-			return back to the original file.
+:Argdo {cmd}		Execute {cmd} for each file in the argument list, then
+			return back to the original file and argument.
+:[range]Argdo {cmd}	Execute {cmd} for the [range] of indices from the
+			argument list, then return back to the original file
+			and argument.
 			For example, to execute {cmd} on the remaining
 			arguments, use :.,$Argdo {cmd}
+
+			In contrast to |:argdo|, this also avoids the
+			|hit-enter| prompt (all files will be processed
+			without further interaction from you), and an error
+			summary will be printed.
+			To work on the errors / arguments with errors, you can
+			use |:ArgdoErrors| and |:ArgdoDeleteSuccessful|.
+								*:ArgdoErrors*
+:ArgdoErrors		List all error messages that occurred during the last
+			|:Argdo| command, and for each unique error, print the
+			argument number and filespec.
+						      *:ArgdoDeleteSuccessful*
+:ArgdoDeleteSuccessful	Delete those arguments from the argument list that
+			didn't cause any error messages during the last
+			|:Argdo| command.
 
 								 *:ArgsFilter*
 :ArgsFilter {expr}	Apply the |filter()| of {expr} to the argument list,
 			and keep only those where {expr} yields true. This
 			allows you to |:argdelete| multiple arguments at once
-			or without specifying the full filename.
+			and to delete without specifying the full filename.
 								*:ArgsNegated*
 :ArgsNegated[!] {arglist}
 			Define all files except {arglist} as the new argument
@@ -61,13 +81,21 @@ USAGE							   *ArgsAndMore-usage*
 
 								   *:ArgsList*
 :ArgsList[!] 	    	List each argument number and filespec in a neat list
-			(not just one after the other as |:args|. With [!],
+			(not just one after the other as |:args|). With [!],
 			expand all arguments to absolute filespecs.
 :ArgsList[!] {glob}	List each argument number and filespec that matches
 			(with [!]: does not match) {glob} in a neat list.
 			Matching and printing is done to the full filespec.
+
 							     *:ArgsToQuickfix*
 :ArgsToQuickfix		Show all arguments as a quickfix list.
+
+					      *:CListToArgs* *:CListToArgsAdd*
+:CListToArgs		Convert the files in the quickfix list to arguments.
+:[count]CListToArgsAdd
+					      *:LListToArgs* *:LListToArgsAdd*
+:LListToArgs		Convert the files in the window's location list to
+:[count]LListToArgsAdd	arguments.
 
 
 ==============================================================================
@@ -100,7 +128,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-GOAL
+1.00	30-Jul-2012
 First published version.
 
 0.01	26-Aug-2008
