@@ -10,7 +10,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	003	30-Jul-2012	ENH: Implement :CListToArgs et al.
+"   1.00.003	30-Jul-2012	ENH: Implement :CListToArgs et al.
+"				ENH: Add :ArgdoErrors and :ArgdoDeleteSuccessful
+"				to further analyse and filter the processed
+"				arguments.
 "	002	29-Jul-2012	Add :ArgsFilter, :ArgsList, :ArgsToQuickfix
 "				commands.
 "	001	29-Jul-2012	file creation from ingocommands.vim
@@ -37,6 +40,8 @@ command! -nargs=1 -complete=command Tabwindo call ArgsAndMore#Tabwindo(<f-args>)
 " range from the command history. (This means that we can only use the command
 " interactively, not in a script.)
 command! -count=0 -nargs=1 -complete=command Argdo call ArgsAndMore#ArgdoWrapper(<count>, <f-args>)
+command! -bar ArgdoErrors call ArgsAndMore#ArgdoErrors()
+command! -bar ArgdoDeleteSuccessful call ArgsAndMore#ArgdoDeleteSuccessful()
 
 
 command! -nargs=1 -complete=expression ArgsFilter call ArgsAndMore#ArgsFilter(<q-args>)
