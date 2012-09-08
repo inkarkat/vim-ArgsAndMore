@@ -10,6 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.01.004	27-Aug-2012	Do not use <f-args> because of its unescaping
+"				behavior.
 "   1.00.003	30-Jul-2012	ENH: Implement :CListToArgs et al.
 "				ENH: Add :ArgdoErrors and :ArgdoDeleteSuccessful
 "				to further analyse and filter the processed
@@ -27,10 +29,10 @@ let g:loaded_ArgsAndMore = 1
 " Note: No -bar for the :...do commands; they can take a sequence of Vim
 " commands.
 
-command! -nargs=1 -complete=command Windo    call ArgsAndMore#Windo(<f-args>)
-command! -nargs=1 -complete=command Winbufdo call ArgsAndMore#Winbufdo(<f-args>)
-command! -nargs=1 -complete=command Tabdo    call ArgsAndMore#Tabdo(<f-args>)
-command! -nargs=1 -complete=command Tabwindo call ArgsAndMore#Tabwindo(<f-args>)
+command! -nargs=1 -complete=command Windo    call ArgsAndMore#Windo(<q-args>)
+command! -nargs=1 -complete=command Winbufdo call ArgsAndMore#Winbufdo(<q-args>)
+command! -nargs=1 -complete=command Tabdo    call ArgsAndMore#Tabdo(<q-args>)
+command! -nargs=1 -complete=command Tabwindo call ArgsAndMore#Tabwindo(<q-args>)
 
 
 " Note: No -bar; can take a sequence of Vim commands.
@@ -39,18 +41,18 @@ command! -nargs=1 -complete=command Tabwindo call ArgsAndMore#Tabwindo(<f-args>)
 " argument indices! Instead, use -count=0 as a marker, and extract the original
 " range from the command history. (This means that we can only use the command
 " interactively, not in a script.)
-command! -count=0 -nargs=1 -complete=command Argdo call ArgsAndMore#ArgdoWrapper(<count>, <f-args>)
+command! -count=0 -nargs=1 -complete=command Argdo call ArgsAndMore#ArgdoWrapper(<count>, <q-args>)
 command! -bar ArgdoErrors call ArgsAndMore#ArgdoErrors()
 command! -bar ArgdoDeleteSuccessful call ArgsAndMore#ArgdoDeleteSuccessful()
 
 
 command! -nargs=1 -complete=expression ArgsFilter call ArgsAndMore#ArgsFilter(<q-args>)
 
-command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated('<bang>', <f-args>)
+command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated('<bang>', <q-args>)
 
 " Note: Must use * instead of ?; otherwise (due to -complete=file), Vim
 " complains about globs with "E77: Too many file names".
-command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(<bang>0, <f-args>)
+command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(<bang>0, <q-args>)
 
 command! -bar ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix()
 
