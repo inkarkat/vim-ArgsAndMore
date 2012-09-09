@@ -5,7 +5,7 @@
 description			|ArgsAndMore-description|
 usage				|ArgsAndMore-usage|
 installation			|ArgsAndMore-installation|
-integration			|ArgsAndMore-integration|
+configuration			|ArgsAndMore-configuration|
 limitations			|ArgsAndMore-limitations|
 known problems			|ArgsAndMore-known-problems|
 todo				|ArgsAndMore-todo|
@@ -32,6 +32,9 @@ RELATED WORKS								     *
 ==============================================================================
 USAGE							   *ArgsAndMore-usage*
 
+								      *:Bufdo*
+:Bufdo {cmd}		Execute {cmd} in each buffer in the buffer list, then
+			return back to the original one.
 								      *:Windo*
 :Windo {cmd}		Execute {cmd} in each window, then return back to the
 			original one.
@@ -114,8 +117,16 @@ DEPENDENCIES					    *ArgsAndMore-dependencies*
 - Requires Vim 7.0 or higher.
 
 ==============================================================================
-INTEGRATION					     *ArgsAndMore-integration*
+CONFIGURATION					   *ArgsAndMore-configuration*
 
+						  *g:ArgsAndMore_AfterCommand*
+After each {cmd}, an extra Ex command (sequence) can be executed. By default,
+a delay of 100 ms is introduced here. This allows you to abort an interactive
+:s///c substitution by pressing CTRL-C twice within the delay. (Without the
+delay, it may or may not abort.) To also persist any changes to the buffer,
+you could use: >
+    let g:ArgsAndMore_AfterCommand = 'update | sleep 100ms'
+<
 ==============================================================================
 LIMITATIONS					     *ArgsAndMore-limitations*
 
@@ -127,6 +138,13 @@ IDEAS							   *ArgsAndMore-ideas*
 
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
+
+1.10	09-Sep-2012
+- Add g:ArgsAndMore_AfterCommand hook before buffer switching and use this by
+  default to add a small delay, which allows for aborting an interactive s///c
+  substitution by pressing CTRL-C twice within the delay.
+- Add :Bufdo command for completeness, to get the new hook, and the enhanced
+  error reporting of :Argdo.
 
 1.01	27-Aug-2012
 - Do not use <f-args> because of its unescaping behavior.
