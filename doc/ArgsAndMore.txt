@@ -125,7 +125,7 @@ a delay of 100 ms is introduced here. This allows you to abort an interactive
 :s///c substitution by pressing CTRL-C twice within the delay. (Without the
 delay, it may or may not abort.) To also persist any changes to the buffer,
 you could use: >
-    let g:ArgsAndMore_AfterCommand = 'update | sleep 100ms'
+    let g:ArgsAndMore_AfterCommand = 'update | sleep 100m'
 <
 ==============================================================================
 LIMITATIONS					     *ArgsAndMore-limitations*
@@ -139,7 +139,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-1.10	09-Sep-2012
+1.10	10-Sep-2012
 - Add g:ArgsAndMore_AfterCommand hook before buffer switching and use this by
   default to add a small delay, which allows for aborting an interactive s///c
   substitution by pressing CTRL-C twice within the delay.
