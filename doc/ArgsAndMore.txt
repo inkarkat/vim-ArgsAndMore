@@ -28,6 +28,8 @@ RELATED WORKS								     *
 - The :ArgsNegated command was inspired by the following Stack Overflow
   question:
     http://stackoverflow.com/questions/11547662/how-can-i-negate-a-glob-in-vim
+- The https://github.com/nelstrom/vim-qargs plugin has a :Qargs command
+  similar (but more simplistic) than :CListToArgs.
 
 ==============================================================================
 USAGE							   *ArgsAndMore-usage*
