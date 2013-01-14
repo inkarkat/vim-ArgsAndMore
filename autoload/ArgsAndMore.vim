@@ -13,6 +13,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.004	09-Sep-2012	Factor out common try..execute..catch into
+"				s:Execute().
+"				Add g:ArgsAndMore_AfterCommand hook before
+"				buffer switching.
+"				Add :Bufdo, with error summary like for :Argdo.
 "   1.01.003	27-Aug-2012	Do not use <f-args> because of its unescaping
 "				behavior.
 "				FIX: "E480: No match" on :ArgsNegated with
@@ -43,20 +48,26 @@ function! s:ExceptionMsg( exception )
     call s:ErrorMsg(s:MsgFromException(a:exception))
 endfunction
 
+function! s:AfterExecute()
+    execute g:ArgsAndMore_AfterCommand
+endfunction
+function! s:Execute( command )
+    try
+	execute a:command
+    catch /^Vim\%((\a\+)\)\=:E/
+	call s:ExceptionMsg(v:exception)
+    endtry
+
+    call s:AfterExecute()
+endfunction
+
 function! ArgsAndMore#Windo( command )
     " By entering a window, its height is potentially increased from 0 to 1 (the
     " minimum for the current window). To avoid any modification, save the window
     " sizes and restore them after visiting all windows.
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
-
-	    windo
-	    \   try |
-	    \       execute a:command |
-	    \   catch /^Vim\%((\a\+)\)\=:E/ |
-	    \       call s:ExceptionMsg(v:exception) |
-	    \   endtry
-
+	    windo call s:Execute(a:command)
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
@@ -73,11 +84,7 @@ function! ArgsAndMore#Winbufdo( command )
 	    windo
 	    \   if index(l:buffers, bufnr('')) == -1 |
 	    \       call add(l:buffers, bufnr('')) |
-	    \       try |
-	    \           execute a:command |
-	    \       catch /^Vim\%((\a\+)\)\=:E/ |
-	    \           call s:ExceptionMsg(v:exception) |
-	    \       endtry |
+	    \       call s:Execute(a:command)
 	    \   endif
 
 	execute l:originalWinNr . 'wincmd w'
@@ -86,12 +93,7 @@ endfunction
 
 function! ArgsAndMore#Tabdo( command )
     let l:originalTabNr = tabpagenr()
-	tabdo
-	    \   try |
-	    \       execute a:command |
-	    \   catch /^Vim\%((\a\+)\)\=:E/ |
-	    \       call s:ExceptionMsg(v:exception) |
-	    \   endtry
+	tabdo call s:Execute(a:command)
     execute l:originalTabNr . 'tabnext'
 endfunction
 
@@ -128,6 +130,8 @@ function! s:ArgExecute( command )
 	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
 	call s:ExceptionMsg(v:exception)
     endtry
+
+    call s:AfterExecute()
 endfunction
 function! s:Argdo( command )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
@@ -298,6 +302,38 @@ function! ArgsAndMore#ArgdoDeleteSuccessful()
     endtry
 
     echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
+endfunction
+
+function! ArgsAndMore#Bufdo( command )
+    " Structure here like in s:Argdo().
+
+    let l:originalBufNr = bufnr('')
+
+    let l:save_more = &more
+    set nomore
+
+    let s:errors = []
+
+    " The :bufdo must be enclosed in try..catch to handle errors from buffer
+    " switches (e.g. "E37: No write since last change" when :set nohidden and
+    " the command modified, but didn't update the buffer).
+    try
+	bufdo call s:ArgExecute(a:command)
+    catch /^Vim\%((\a\+)\)\=:E/
+	call add(s:errors, [-1, bufnr(''), s:MsgFromException(v:exception)])
+	call s:ExceptionMsg(v:exception)
+    endtry
+
+    silent! execute l:originalBufNr . 'buffer'
+
+    if len(s:errors) == 1
+	call s:ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
+    elseif len(s:errors) > 1
+	let l:bufferNumbers = sort(ingocollections#unique(map(copy(s:errors), 'v:val[1]')), 'ingocollections#numsort')
+	call s:ErrorMsg(printf('%d error%s in buffer%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')))
+    endif
+
+    let &more = l:save_more
 endfunction
 
 
