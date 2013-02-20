@@ -141,6 +141,9 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
+1.11	15-Jan-2013
+FIX: Factor out s:sort() and also use numerical sort in the one missed case.
+
 1.10	10-Sep-2012
 - Add g:ArgsAndMore_AfterCommand hook before buffer switching and use this by
   default to add a small delay, which allows for aborting an interactive s///c
@@ -161,7 +164,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012 Ingo Karkat
+Copyright: (C) 2012-2013 Ingo Karkat
 The VIM LICENSE applies to this script; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
