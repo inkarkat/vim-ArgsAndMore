@@ -7,12 +7,14 @@
 "   - ingofileargs.vim autoload script
 "   - ingosearch.vim autoload script
 "
-" Copyright: (C) 2012 Ingo Karkat
+" Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.11.005	15-Jan-2013	FIX: Factor out s:sort() and also use numerical
+"				sort in the one missed case.
 "   1.10.004	09-Sep-2012	Factor out common try..execute..catch into
 "				s:Execute().
 "				Add g:ArgsAndMore_AfterCommand hook before
@@ -46,6 +48,10 @@ function! s:MsgFromException( exception )
 endfunction
 function! s:ExceptionMsg( exception )
     call s:ErrorMsg(s:MsgFromException(a:exception))
+endfunction
+
+function! s:sort( list )
+    return sort(a:list, 'ingocollections#numsort')
 endfunction
 
 function! s:AfterExecute()
@@ -168,7 +174,7 @@ function! s:Argdo( command )
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
-	let l:argumentNumbers = sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')), 'ingocollections#numsort')
+	let l:argumentNumbers = s:sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')))
 	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
     endif
 
@@ -214,7 +220,7 @@ function! s:ArgIterate( startIdx, endIdx, command )
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
-	let l:argumentNumbers = sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')), 'ingocollections#numsort')
+	let l:argumentNumbers = s:sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')))
 	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
     endif
 
@@ -264,7 +270,7 @@ function! ArgsAndMore#ArgdoErrors()
 	let l:argidxByError[l:errorMsg] = get(l:argidxByError, l:errorMsg, []) + [[l:argidx, l:bufnr]]
     endfor
 
-    for l:errorMsg in sort(keys(l:argidxByError))
+    for l:errorMsg in s:sort(keys(l:argidxByError))
 	echohl ErrorMsg
 	echo l:errorMsg
 	echohl None
@@ -329,7 +335,7 @@ function! ArgsAndMore#Bufdo( command )
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
-	let l:bufferNumbers = sort(ingocollections#unique(map(copy(s:errors), 'v:val[1]')), 'ingocollections#numsort')
+	let l:bufferNumbers = s:sort(ingocollections#unique(map(copy(s:errors), 'v:val[1]')))
 	call s:ErrorMsg(printf('%d error%s in buffer%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')))
     endif
 
