@@ -2,7 +2,7 @@
 "
 " DEPENDENCIES:
 "   - escapings.vim autoload script
-"   - ingocollections.vim autoload script
+"   - ingo/collections.vim autoload script
 "   - ingofile.vim autoload script
 "   - ingofileargs.vim autoload script
 "   - ingosearch.vim autoload script
@@ -13,6 +13,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.12.006	21-Feb-2013	Move ingocollections.vim to ingo-library.
 "   1.11.005	15-Jan-2013	FIX: Factor out s:sort() and also use numerical
 "				sort in the one missed case.
 "   1.10.004	09-Sep-2012	Factor out common try..execute..catch into
@@ -51,7 +52,7 @@ function! s:ExceptionMsg( exception )
 endfunction
 
 function! s:sort( list )
-    return sort(a:list, 'ingocollections#numsort')
+    return sort(a:list, 'ingo#collections#numsort')
 endfunction
 
 function! s:AfterExecute()
@@ -174,7 +175,7 @@ function! s:Argdo( command )
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
-	let l:argumentNumbers = s:sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')))
+	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
 	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
     endif
 
@@ -220,7 +221,7 @@ function! s:ArgIterate( startIdx, endIdx, command )
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
-	let l:argumentNumbers = s:sort(ingocollections#unique(map(copy(s:errors), 'v:val[0] + 1')))
+	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
 	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
     endif
 
@@ -289,7 +290,7 @@ function! ArgsAndMore#ArgdoDeleteSuccessful()
 	let l:originalArgNum = l:endIdx - l:startIdx + 1
     endif
 
-    let l:argIdxDict = ingocollections#ToDict(map(copy(s:errors), 'v:val[0]'))
+    let l:argIdxDict = ingo#collections#ToDict(map(copy(s:errors), 'v:val[0]'))
     try
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
@@ -335,7 +336,7 @@ function! ArgsAndMore#Bufdo( command )
     if len(s:errors) == 1
 	call s:ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
-	let l:bufferNumbers = s:sort(ingocollections#unique(map(copy(s:errors), 'v:val[1]')))
+	let l:bufferNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[1]')))
 	call s:ErrorMsg(printf('%d error%s in buffer%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')))
     endif
 
@@ -383,7 +384,7 @@ function! ArgsAndMore#ArgsNegated( bang, filePatternsString )
     " First add all files in the passed directories, then remove the glob
     " matches. This allows to exclude multiple patterns from the same directory,
     " e.g. :ArgsNegated foo* bar*
-    let l:argDirspecGlobs = ingocollections#unique(map(copy(l:filePatterns), 'ingofile#CombineToFilespec(fnamemodify(v:val, ":h"), "*")'))
+    let l:argDirspecGlobs = ingo#collections#Unique(map(copy(l:filePatterns), 'ingofile#CombineToFilespec(fnamemodify(v:val, ":h"), "*")'))
     " The globs passed to :argdelete must match the format listed in :args, so
     " modify all passed globs to be relative to the CWD.
     let l:argNegationGlobs = map(copy(l:filePatterns), 'fnamemodify(v:val, ":p:.")')
@@ -481,7 +482,7 @@ function! ArgsAndMore#QuickfixToArgs( list, isArgAdd, count, bang )
 
     let l:addedBufnrs = {}
     let l:filespecs = []
-    let l:existingArguments = ingocollections#ToDict(argv())
+    let l:existingArguments = ingo#collections#ToDict(argv())
     for l:bufnr in map(a:list, 'v:val.bufnr')
 	if has_key(l:addedBufnrs, l:bufnr)
 	    continue
