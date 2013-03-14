@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - escapings.vim autoload script
 "   - ingo/collections.vim autoload script
+"   - ingo/msg.vim autoload script
 "   - ingofile.vim autoload script
 "   - ingofileargs.vim autoload script
 "   - ingosearch.vim autoload script
@@ -13,6 +14,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.12.007	15-Mar-2013	Use ingo/msg.vim error functions. Obsolete
+"				s:ErrorMsg() and s:MsgFromException().
 "   1.12.006	21-Feb-2013	Move ingocollections.vim to ingo-library.
 "   1.11.005	15-Jan-2013	FIX: Factor out s:sort() and also use numerical
 "				sort in the one missed case.
@@ -36,21 +39,6 @@
 "				the current file on :Argdo.
 "	001	29-Jul-2012	file creation from ingocommands.vim
 
-function! s:ErrorMsg( text )
-    let v:errmsg = a:text
-    echohl ErrorMsg
-    echomsg v:errmsg
-    echohl None
-endfunction
-function! s:MsgFromException( exception )
-    " v:exception contains what is normally in v:errmsg, but with extra
-    " exception source info prepended, which we cut away.
-    return substitute(a:exception, '^Vim\%((\a\+)\)\=:', '', '')
-endfunction
-function! s:ExceptionMsg( exception )
-    call s:ErrorMsg(s:MsgFromException(a:exception))
-endfunction
-
 function! s:sort( list )
     return sort(a:list, 'ingo#collections#numsort')
 endfunction
@@ -62,7 +50,7 @@ function! s:Execute( command )
     try
 	execute a:command
     catch /^Vim\%((\a\+)\)\=:E/
-	call s:ExceptionMsg(v:exception)
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     call s:AfterExecute()
@@ -134,8 +122,8 @@ function! s:ArgExecute( command )
 	    call add(s:errors, [argidx(), bufnr(''), v:errmsg])
 	endif
     catch /^Vim\%((\a\+)\)\=:E/
-	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
-	call s:ExceptionMsg(v:exception)
+	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     call s:AfterExecute()
@@ -166,17 +154,17 @@ function! s:Argdo( command )
 	" see the error message.)
 	argdo call s:ArgExecute(a:command)
     catch /^Vim\%((\a\+)\)\=:E/
-	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
-	call s:ExceptionMsg(v:exception)
+	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     silent! execute l:restoreCommand
 
     if len(s:errors) == 1
-	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
     endif
 
     " To avoid a hit-enter prompt, we have to restore this _after_ the summary
@@ -212,17 +200,17 @@ function! s:ArgIterate( startIdx, endIdx, command )
 	    call s:ArgExecute(a:command)
 	endfor
     catch /^Vim\%((\a\+)\)\=:E/
-	call add(s:errors, [argidx(), bufnr(''), s:MsgFromException(v:exception)])
-	call s:ExceptionMsg(v:exception)
+	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     silent! execute l:restoreCommand
 
     if len(s:errors) == 1
-	call s:ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call s:ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
     endif
 
     let &more = l:save_more
@@ -260,7 +248,7 @@ function! ArgsAndMore#ArgdoWrapper( count, command )
 	    if len(l:limits) != 2 || l:limits[0] > l:limits[1] | throw 'Invalid range' | endif
 	    call s:ArgIterate(l:limits[0], l:limits[1], a:command)
 	catch
-	    call s:ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
+	    call ingo#msg#ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	endtry
     endif
 endfunction
@@ -300,12 +288,7 @@ function! ArgsAndMore#ArgdoDeleteSuccessful()
 	    endif
 	endfor
     catch /^Vim\%((\a\+)\)\=:E/
-	" v:exception contains what is normally in v:errmsg, but with extra
-	" exception source info prepended, which we cut away.
-	let v:errmsg = substitute(v:exception, '^Vim\%((\a\+)\)\=:', '', '')
-	echohl ErrorMsg
-	echomsg v:errmsg
-	echohl None
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
@@ -327,17 +310,17 @@ function! ArgsAndMore#Bufdo( command )
     try
 	bufdo call s:ArgExecute(a:command)
     catch /^Vim\%((\a\+)\)\=:E/
-	call add(s:errors, [-1, bufnr(''), s:MsgFromException(v:exception)])
-	call s:ExceptionMsg(v:exception)
+	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     silent! execute l:originalBufNr . 'buffer'
 
     if len(s:errors) == 1
-	call s:ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#msg#ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:bufferNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[1]')))
-	call s:ErrorMsg(printf('%d error%s in buffer%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in buffer%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')))
     endif
 
     let &more = l:save_more
@@ -360,12 +343,7 @@ function! ArgsAndMore#ArgsFilter( filterExpression )
 	    endif
 	endfor
     catch /^Vim\%((\a\+)\)\=:E/
-	" v:exception contains what is normally in v:errmsg, but with extra
-	" exception source info prepended, which we cut away.
-	let v:errmsg = substitute(v:exception, '^Vim\%((\a\+)\)\=:', '', '')
-	echohl ErrorMsg
-	echomsg v:errmsg
-	echohl None
+	call ingo#msg#VimExceptionMsg()
     endtry
 
     if len(l:deletedArgs) == 0
@@ -403,12 +381,7 @@ function! ArgsAndMore#ArgsNegated( bang, filePatternsString )
 	execute 'argdelete' join(l:argNegationGlobs)
 	execute 'first' . a:bang
     catch /^Vim\%((\a\+)\)\=:E/
-	" v:exception contains what is normally in v:errmsg, but with extra
-	" exception source info prepended, which we cut away.
-	let v:errmsg = substitute(v:exception, '^Vim\%((\a\+)\)\=:', '', '')
-	echohl ErrorMsg
-	echomsg v:errmsg
-	echohl None
+	call ingo#msg#VimExceptionMsg()
     endtry
 endfunction
 
@@ -472,7 +445,7 @@ function! s:ExecuteWithoutWildignore( excommand, filespecs )
 endfunction
 function! ArgsAndMore#QuickfixToArgs( list, isArgAdd, count, bang )
     if empty(a:list)
-	call s:ErrorMsg('No items')
+	call ingo#msg#ErrorMsg('No items')
 	return
     endif
 
