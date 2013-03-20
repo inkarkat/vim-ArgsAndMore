@@ -37,6 +37,8 @@ USAGE							   *ArgsAndMore-usage*
 								      *:Bufdo*
 :Bufdo {cmd}		Execute {cmd} in each buffer in the buffer list, then
 			return back to the original one.
+			Any encountered errors are also put into the
+			|quickfix| list.
 								      *:Windo*
 :Windo {cmd}		Execute {cmd} in each window, then return back to the
 			original one.
@@ -65,6 +67,8 @@ USAGE							   *ArgsAndMore-usage*
 			summary will be printed.
 			To work on the errors / arguments with errors, you can
 			use |:ArgdoErrors| and |:ArgdoDeleteSuccessful|.
+			Also, any encountered errors are put into the
+			|quickfix| list.
 								*:ArgdoErrors*
 :ArgdoErrors		List all error messages that occurred during the last
 			|:Argdo| command, and for each unique error, print the
@@ -143,6 +147,11 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
+1.12
+- ENH: Add errors from :Argdo and :BufDo to the quickfix list to allow easier
+  rework.
+- Avoid script errors when using :Argdo 3s/foo/bar
+
 1.11	15-Jan-2013
 FIX: Factor out s:sort() and also use numerical sort in the one missed case.
 
@@ -167,7 +176,7 @@ Started development.
 
 ==============================================================================
 Copyright: (C) 2012-2013 Ingo Karkat
-The VIM LICENSE applies to this script; see |copyright|.
+The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
 ==============================================================================
