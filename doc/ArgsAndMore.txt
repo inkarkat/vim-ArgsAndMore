@@ -147,7 +147,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-1.12
+1.12	RELEASEME
 - ENH: Add errors from :Argdo and :BufDo to the quickfix list to allow easier
   rework.
 - Avoid script errors when using :Argdo 3s/foo/bar
