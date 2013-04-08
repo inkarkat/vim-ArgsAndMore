@@ -16,6 +16,8 @@
 " REVISION	DATE		REMARKS
 "   1.12.007	15-Mar-2013	Use ingo/msg.vim error functions. Obsolete
 "				s:ErrorMsg() and s:MsgFromException().
+"				ENH: Add errors from :Argdo and :BufDo to the
+"				quickfix list to allow easier rework.
 "   1.12.006	21-Feb-2013	Move ingocollections.vim to ingo-library.
 "   1.11.005	15-Jan-2013	FIX: Factor out s:sort() and also use numerical
 "				sort in the one missed case.
@@ -114,15 +116,34 @@ function! s:ArgumentListRestoreCommand()
     return l:restoreCommand
 endfunction
 let s:errors = []
+function! s:ErrorToQuickfixEntry( error )
+    let l:entry = {'bufnr': a:error[1], 'text': a:error[2]}
+    if len(a:error) >= 4
+	let l:entry.lnum = a:error[3]
+    endif
+    if len(a:error) >= 5
+	let l:entry.col = a:error[4]
+    endif
+    return l:entry
+endfunction
+function! s:ErrorsToQuickfix( command )
+    if len(s:errors) == 0
+	return
+    endif
+
+    silent execute 'doautocmd QuickFixCmdPre' a:command | " Allow hooking into the quickfix update.
+	call setqflist(map(copy(s:errors), "s:ErrorToQuickfixEntry(v:val)"))
+    silent execute 'doautocmd QuickFixCmdPost' a:command | " Allow hooking into the quickfix update.
+endfunction
 function! s:ArgExecute( command )
     try
 	let v:errmsg = ''
 	execute a:command
 	if ! empty(v:errmsg)
-	    call add(s:errors, [argidx(), bufnr(''), v:errmsg])
+	    call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')])
 	endif
     catch /^Vim\%((\a\+)\)\=:E/
-	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
+	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException(), line('.'), col('.')])
 	call ingo#msg#VimExceptionMsg()
     endtry
 
@@ -160,6 +181,7 @@ function! s:Argdo( command )
 
     silent! execute l:restoreCommand
 
+    call s:ErrorsToQuickfix('argdo')
     if len(s:errors) == 1
 	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
@@ -206,6 +228,7 @@ function! s:ArgIterate( startIdx, endIdx, command )
 
     silent! execute l:restoreCommand
 
+    call s:ErrorsToQuickfix('argdo')
     if len(s:errors) == 1
 	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
@@ -237,8 +260,8 @@ function! s:InterpretRange( rangeExpr )
 	return []
     endtry
 endfunction
-function! ArgsAndMore#ArgdoWrapper( count, command )
-    if a:count == 0
+function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command )
+    if a:isNoRangeGiven
 	call s:Argdo(a:command)
     else
 	try
@@ -255,7 +278,8 @@ endfunction
 
 function! ArgsAndMore#ArgdoErrors()
     let l:argidxByError = {}
-    for [l:argidx, l:bufnr, l:errorMsg] in s:errors
+    for l:error in s:errors
+	let [l:argidx, l:bufnr, l:errorMsg] = l:error[0:2]
 	let l:argidxByError[l:errorMsg] = get(l:argidxByError, l:errorMsg, []) + [[l:argidx, l:bufnr]]
     endfor
 
@@ -316,6 +340,7 @@ function! ArgsAndMore#Bufdo( command )
 
     silent! execute l:originalBufNr . 'buffer'
 
+    call s:ErrorsToQuickfix('bufdo')
     if len(s:errors) == 1
 	call ingo#msg#ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
@@ -413,7 +438,7 @@ endfunction
 
 function! ArgsAndMore#ArgsToQuickfix()
     silent doautocmd QuickFixCmdPre args | " Allow hooking into the quickfix update.
-    call setqflist(map(argv(), "{'filename': v:val, 'lnum': 1}"))
+	call setqflist(map(argv(), "{'filename': v:val, 'lnum': 1}"))
     silent doautocmd QuickFixCmdPost args | " Allow hooking into the quickfix update.
 endfunction
 
