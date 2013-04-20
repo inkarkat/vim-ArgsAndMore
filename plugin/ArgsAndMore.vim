@@ -10,6 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.007	09-Apr-2013	ENH: Add :ArgdoWrite and :BufdoWrite variants
+"				that also perform an automatic :update.
 "   1.12.006	15-Mar-2013	Avoid script errors when using :Argdo 3s/foo/bar
 "				by using -range=-1 instead of -count=0 (which
 "				parses a number from the leading argument) as
@@ -50,11 +52,12 @@ endif
 " Note: No -bar for the :...do commands; they can take a sequence of Vim
 " commands.
 
-command! -nargs=1 -complete=command Bufdo    call ArgsAndMore#Bufdo(<q-args>)
-command! -nargs=1 -complete=command Windo    call ArgsAndMore#Windo(<q-args>)
-command! -nargs=1 -complete=command Winbufdo call ArgsAndMore#Winbufdo(<q-args>)
-command! -nargs=1 -complete=command Tabdo    call ArgsAndMore#Tabdo(<q-args>)
-command! -nargs=1 -complete=command Tabwindo call ArgsAndMore#Tabwindo(<q-args>)
+command! -nargs=1 -complete=command Bufdo       call ArgsAndMore#Bufdo(<q-args>, '')
+command! -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Bufdo(<q-args>, 'update')
+command! -nargs=1 -complete=command Windo       call ArgsAndMore#Windo(<q-args>)
+command! -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo(<q-args>)
+command! -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo(<q-args>)
+command! -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo(<q-args>)
 
 
 " Note: No -bar; can take a sequence of Vim commands.
@@ -65,7 +68,8 @@ command! -nargs=1 -complete=command Tabwindo call ArgsAndMore#Tabwindo(<q-args>)
 " sense with :Argdo; -count=0 would also parse a leading number from the passed
 " argument), and extract the original range from the command history. (This
 " means that we can only use the command interactively, not in a script.)
-command! -range=-1 -nargs=1 -complete=command Argdo call ArgsAndMore#ArgdoWrapper((<line2> == 1), <q-args>)
+command! -range=-1 -nargs=1 -complete=command Argdo      call ArgsAndMore#ArgdoWrapper((<line2> == 1), <q-args>, '')
+command! -range=-1 -nargs=1 -complete=command ArgdoWrite call ArgsAndMore#ArgdoWrapper((<line2> == 1), <q-args>, 'update')
 command! -bar ArgdoErrors call ArgsAndMore#ArgdoErrors()
 command! -bar ArgdoDeleteSuccessful call ArgsAndMore#ArgdoDeleteSuccessful()
 
