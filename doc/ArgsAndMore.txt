@@ -39,6 +39,9 @@ USAGE							   *ArgsAndMore-usage*
 			return back to the original one.
 			Any encountered errors are also put into the
 			|quickfix| list.
+								 *:BufdoWrite*
+:BufdoWrite {cmd}	Execute {cmd} in each buffer in the buffer list and
+			automatically persist any changes (|:update|).
 								      *:Windo*
 :Windo {cmd}		Execute {cmd} in each window, then return back to the
 			original one.
@@ -69,6 +72,10 @@ USAGE							   *ArgsAndMore-usage*
 			use |:ArgdoErrors| and |:ArgdoDeleteSuccessful|.
 			Also, any encountered errors are put into the
 			|quickfix| list.
+								 *:ArgdoWrite*
+:ArgdoWrite {cmd}	Execute {cmd} in each buffer in the argument list and
+			automatically persist any changes (|:update|).
+
 								*:ArgdoErrors*
 :ArgdoErrors		List all error messages that occurred during the last
 			|:Argdo| command, and for each unique error, print the
@@ -147,7 +154,9 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-1.12	RELEASEME
+1.20	RELEASEME
+- ENH: Add :ArgdoWrite and :BufdoWrite variants that also perform an automatic
+  :update.
 - ENH: Add errors from :Argdo and :BufDo to the quickfix list to allow easier
   rework.
 - Avoid script errors when using :Argdo 3s/foo/bar
