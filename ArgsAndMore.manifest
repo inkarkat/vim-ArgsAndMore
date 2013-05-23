@@ -1,5 +1,4 @@
 autoload/escapings.vim
-autoload/ingocollections.vim
 autoload/ingofile.vim
 autoload/ingosearch.vim
 autoload/ArgsAndMore.vim
