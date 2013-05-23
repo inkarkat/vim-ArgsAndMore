@@ -14,6 +14,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.008	09-Apr-2013	ENH: Allow postCommand execute for :Argdo and
+"				:Bufdo.
 "   1.12.007	15-Mar-2013	Use ingo/msg.vim error functions. Obsolete
 "				s:ErrorMsg() and s:MsgFromException().
 "				ENH: Add errors from :Argdo and :BufDo to the
@@ -135,12 +137,19 @@ function! s:ErrorsToQuickfix( command )
 	call setqflist(map(copy(s:errors), "s:ErrorToQuickfixEntry(v:val)"))
     silent execute 'doautocmd QuickFixCmdPost' a:command | " Allow hooking into the quickfix update.
 endfunction
-function! s:ArgExecute( command )
+function! s:ArgExecute( command, postCommand )
     try
 	let v:errmsg = ''
 	execute a:command
 	if ! empty(v:errmsg)
 	    call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')])
+	endif
+	if ! empty(a:postCommand)
+	    let v:errmsg = ''
+	    execute a:postCommand
+	    if ! empty(v:errmsg)
+		call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')])
+	    endif
 	endif
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException(), line('.'), col('.')])
@@ -149,7 +158,7 @@ function! s:ArgExecute( command )
 
     call s:AfterExecute()
 endfunction
-function! s:Argdo( command )
+function! s:Argdo( command, postCommand )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     " Temporarily turn off 'more', as this interferes with the "automated batch
@@ -173,7 +182,7 @@ function! s:Argdo( command )
 	" Individual commands need to be enclosed in try..catch, or the :argdo
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
-	argdo call s:ArgExecute(a:command)
+	argdo call s:ArgExecute(a:command, a:postCommand)
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -193,7 +202,7 @@ function! s:Argdo( command )
     " error message.
     let &more = l:save_more
 endfunction
-function! s:ArgIterate( startIdx, endIdx, command )
+function! s:ArgIterate( startIdx, endIdx, command, postCommand )
     " Structure here like in s:Argdo().
 
     let l:restoreCommand = s:ArgumentListRestoreCommand()
@@ -219,7 +228,7 @@ function! s:ArgIterate( startIdx, endIdx, command )
 		echo l:nextArgumentOutput
 	    endif
 
-	    call s:ArgExecute(a:command)
+	    call s:ArgExecute(a:command, a:postCommand)
 	endfor
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
@@ -260,16 +269,16 @@ function! s:InterpretRange( rangeExpr )
 	return []
     endtry
 endfunction
-function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command )
+function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command, postCommand )
     if a:isNoRangeGiven
-	call s:Argdo(a:command)
+	call s:Argdo(a:command, a:postCommand)
     else
 	try
 	    let l:range = matchstr(histget('cmd', -1), '\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
 	    if empty(l:range) | throw 'Invalid range' | endif
 	    let l:limits = s:InterpretRange(l:range)
 	    if len(l:limits) != 2 || l:limits[0] > l:limits[1] | throw 'Invalid range' | endif
-	    call s:ArgIterate(l:limits[0], l:limits[1], a:command)
+	    call s:ArgIterate(l:limits[0], l:limits[1], a:command, a:postCommand)
 	catch
 	    call ingo#msg#ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	endtry
@@ -318,7 +327,7 @@ function! ArgsAndMore#ArgdoDeleteSuccessful()
     echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
 endfunction
 
-function! ArgsAndMore#Bufdo( command )
+function! ArgsAndMore#Bufdo( command, postCommand )
     " Structure here like in s:Argdo().
 
     let l:originalBufNr = bufnr('')
@@ -332,7 +341,7 @@ function! ArgsAndMore#Bufdo( command )
     " switches (e.g. "E37: No write since last change" when :set nohidden and
     " the command modified, but didn't update the buffer).
     try
-	bufdo call s:ArgExecute(a:command)
+	bufdo call s:ArgExecute(a:command, a:postCommand)
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
