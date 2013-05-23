@@ -160,6 +160,9 @@ HISTORY							 *ArgsAndMore-history*
 - ENH: Add errors from :Argdo and :BufDo to the quickfix list to allow easier
   rework.
 - Avoid script errors when using :Argdo 3s/foo/bar
+- Minor: Change :Argdo[Write] -range=-1 default check to use <count>, which
+  maintains the actual -1 default, and therefore also delivers correct results
+  when on line 1.
 
 1.11	15-Jan-2013
 FIX: Factor out s:sort() and also use numerical sort in the one missed case.
