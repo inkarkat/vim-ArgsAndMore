@@ -4,9 +4,9 @@
 "   - escapings.vim autoload script
 "   - ingo/collections.vim autoload script
 "   - ingo/msg.vim autoload script
+"   - ingo/regexp.vim autoload script
 "   - ingofile.vim autoload script
 "   - ingofileargs.vim autoload script
-"   - ingosearch.vim autoload script
 "
 " Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -14,6 +14,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.009	24-May-2013	Move ingosearch.vim to ingo-library.
 "   1.20.008	09-Apr-2013	ENH: Allow postCommand execute for :Argdo and
 "				:Bufdo.
 "   1.12.007	15-Mar-2013	Use ingo/msg.vim error functions. Obsolete
@@ -424,7 +425,7 @@ endfunction
 function! ArgsAndMore#ArgsList( isBang, fileglob )
     let l:isFullPath = (! empty(a:fileglob) || a:isBang)
     if ! empty(a:fileglob)
-	let l:pattern = ingosearch#WildcardExprToSearchPattern(a:fileglob, '')
+	let l:pattern = ingo#regexp#FromWildcard(a:fileglob, '')
     endif
 
     echohl Title
