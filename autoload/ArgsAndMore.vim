@@ -43,6 +43,8 @@
 "				ENH: Restore the argument index in addition to
 "				the current file on :Argdo.
 "	001	29-Jul-2012	file creation from ingocommands.vim
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! s:sort( list )
     return sort(a:list, 'ingo#collections#numsort')
@@ -138,7 +140,32 @@ function! s:ErrorsToQuickfix( command )
 	call setqflist(map(copy(s:errors), "s:ErrorToQuickfixEntry(v:val)"))
     silent execute 'doautocmd QuickFixCmdPost' a:command | " Allow hooking into the quickfix update.
 endfunction
+function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
+    if empty(g:ArgsAndMore_InteractiveCommandPattern) || a:command !~# g:ArgsAndMore_InteractiveCommandPattern
+	return | " No interactive command; keep syntax off to speed up processing.
+    endif
+"****D echomsg '****' exists('g:syntax_on') exists('b:current_syntax') string(&l:filetype) string(&l:buftype) index(split(&eventignore, ','), 'Syntax')
+    " Note: Some plugins set up scratch windows with a custom filetype, but
+    " don't set b:current_syntax. To avoid clearing their custom highlightings
+    " when processing their buffer, we try to detect them via 'buftype'.
+    if
+    \   exists('g:syntax_on') &&
+    \   ! exists('b:current_syntax') &&
+    \   ! empty(&l:filetype) &&
+    \   &l:buftype !=# 'nofile' &&
+    \   index(split(&eventignore, ','), 'Syntax') != -1
+	    let l:save_eventignore = &eventignore
+	    set eventignore-=Syntax
+	    try
+		set syntax=ON
+	    finally
+		let &eventignore = l:save_eventignore
+	    endtry
+    endif
+endfunction
 function! s:ArgExecute( command, postCommand )
+    call s:EnableSyntaxHighlightingForInteractiveCommands(a:command)
+
     try
 	let v:errmsg = ''
 	execute a:command
@@ -514,4 +541,6 @@ function! ArgsAndMore#QuickfixToArgs( list, isArgAdd, count, bang )
     endif
 endfunction
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
