@@ -2,11 +2,11 @@
 "
 " DEPENDENCIES:
 "   - escapings.vim autoload script
+"   - ingo/cmdargs/file.vim autoload script
 "   - ingo/collections.vim autoload script
+"   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/regexp.vim autoload script
-"   - ingofile.vim autoload script
-"   - ingofileargs.vim autoload script
 "
 " Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -14,6 +14,18 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.010	01-Jun-2013	ENH: Enable syntax highlighting on :Argdo /
+"				:Bufdo on freshly loaded buffers when the
+"				command is an interactive one (:s///c, according
+"				to g:ArgsAndMore_InteractiveCommandPattern), but
+"				for performance reasons not in the general case.
+"				In :{range}Argdo, emulate the behavior of the
+"				built-in :argdo to disable syntax highlighting
+"				during to speed up the iteration, but consider
+"				our own enhancement, the exception for
+"				interactive commands.
+"			    	Move ingofile.vim into ingo-library.
+"   			    	Move ingofileargs.vim into ingo-library.
 "   1.20.009	24-May-2013	Move ingosearch.vim to ingo-library.
 "   1.20.008	09-Apr-2013	ENH: Allow postCommand execute for :Argdo and
 "				:Bufdo.
@@ -140,10 +152,13 @@ function! s:ErrorsToQuickfix( command )
 	call setqflist(map(copy(s:errors), "s:ErrorToQuickfixEntry(v:val)"))
     silent execute 'doautocmd QuickFixCmdPost' a:command | " Allow hooking into the quickfix update.
 endfunction
+function! s:IsInteractiveCommand( command )
+    return (! empty(g:ArgsAndMore_InteractiveCommandPattern) && a:command =~# g:ArgsAndMore_InteractiveCommandPattern)
+endfunction
+function! s:IsSyntaxSuppressed()
+    return (index(split(&eventignore, ','), 'Syntax') != -1)
+endfunction
 function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
-    if empty(g:ArgsAndMore_InteractiveCommandPattern) || a:command !~# g:ArgsAndMore_InteractiveCommandPattern
-	return | " No interactive command; keep syntax off to speed up processing.
-    endif
 "****D echomsg '****' exists('g:syntax_on') exists('b:current_syntax') string(&l:filetype) string(&l:buftype) index(split(&eventignore, ','), 'Syntax')
     " Note: Some plugins set up scratch windows with a custom filetype, but
     " don't set b:current_syntax. To avoid clearing their custom highlightings
@@ -153,18 +168,20 @@ function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
     \   ! exists('b:current_syntax') &&
     \   ! empty(&l:filetype) &&
     \   &l:buftype !=# 'nofile' &&
-    \   index(split(&eventignore, ','), 'Syntax') != -1
-	    let l:save_eventignore = &eventignore
-	    set eventignore-=Syntax
-	    try
-		set syntax=ON
-	    finally
-		let &eventignore = l:save_eventignore
-	    endtry
+    \   s:IsSyntaxSuppressed()
+	let l:save_eventignore = &eventignore
+	set eventignore-=Syntax
+	try
+	    set syntax=ON
+	finally
+	    let &eventignore = l:save_eventignore
+	endtry
     endif
 endfunction
-function! s:ArgExecute( command, postCommand )
-    call s:EnableSyntaxHighlightingForInteractiveCommands(a:command)
+function! s:ArgExecute( command, postCommand, isEnableSyntax )
+    if a:isEnableSyntax
+	call s:EnableSyntaxHighlightingForInteractiveCommands(a:command)
+    endif
 
     try
 	let v:errmsg = ''
@@ -210,7 +227,8 @@ function! s:Argdo( command, postCommand )
 	" Individual commands need to be enclosed in try..catch, or the :argdo
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
-	argdo call s:ArgExecute(a:command, a:postCommand)
+	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
+	argdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -235,6 +253,14 @@ function! s:ArgIterate( startIdx, endIdx, command, postCommand )
 
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
+    if ! s:IsInteractiveCommand(a:command) && ! s:IsSyntaxSuppressed()
+	" Emulate the behavior of the built-in :argdo to disable syntax
+	" highlighting during to speed up the iteration, but consider our own
+	" enhancement, the exception for interactive commands.
+	let l:undoSuppressSyntax = 1
+	set eventignore+=Syntax
+    endif
+
     let l:save_more = &more
     set nomore
 
@@ -256,11 +282,15 @@ function! s:ArgIterate( startIdx, endIdx, command, postCommand )
 		echo l:nextArgumentOutput
 	    endif
 
-	    call s:ArgExecute(a:command, a:postCommand)
+	    call s:ArgExecute(a:command, a:postCommand, 0)  " Without :argdo, we control the syntax suppression; no need to enable syntax during iteration.
 	endfor
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
+    finally
+	if exists('l:undoSuppressSyntax')
+	    set eventignore-=Syntax
+	endif
     endtry
 
     silent! execute l:restoreCommand
@@ -369,7 +399,8 @@ function! ArgsAndMore#Bufdo( command, postCommand )
     " switches (e.g. "E37: No write since last change" when :set nohidden and
     " the command modified, but didn't update the buffer).
     try
-	bufdo call s:ArgExecute(a:command, a:postCommand)
+	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
+	bufdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)
     catch /^Vim\%((\a\+)\)\=:E/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -419,12 +450,12 @@ function! ArgsAndMore#ArgsFilter( filterExpression )
 endfunction
 
 function! ArgsAndMore#ArgsNegated( bang, filePatternsString )
-    let l:filePatterns = ingofileargs#SplitAndUnescapeArguments(a:filePatternsString)
+    let l:filePatterns = ingo#cmdargs#file#SplitAndUnescape(a:filePatternsString)
 
     " First add all files in the passed directories, then remove the glob
     " matches. This allows to exclude multiple patterns from the same directory,
     " e.g. :ArgsNegated foo* bar*
-    let l:argDirspecGlobs = ingo#collections#Unique(map(copy(l:filePatterns), 'ingofile#CombineToFilespec(fnamemodify(v:val, ":h"), "*")'))
+    let l:argDirspecGlobs = ingo#collections#Unique(map(copy(l:filePatterns), 'ingo#fs#path#Combine(fnamemodify(v:val, ":h"), "*")'))
     " The globs passed to :argdelete must match the format listed in :args, so
     " modify all passed globs to be relative to the CWD.
     let l:argNegationGlobs = map(copy(l:filePatterns), 'fnamemodify(v:val, ":p:.")')
