@@ -523,7 +523,7 @@ function! s:ExecuteWithoutWildignore( excommand, filespecs )
 "* EFFECTS / POSTCONDITIONS:
 "	? List of the procedure's effect on each external variable, control, or other element.
 "* INPUTS:
-"   a:excommand	    ex command to be invoked
+"   a:excommand	    Ex command to be invoked
 "   a:filespecs	    List of filespecs.
 "* RETURN VALUES:
 "   none
