@@ -180,6 +180,7 @@ HISTORY							 *ArgsAndMore-history*
 - In :{range}Argdo, emulate the behavior of the built-in :argdo to disable
   syntax highlighting during to speed up the iteration, but consider our own
   enhancement, the exception for interactive commands.
+- Minor: Make matchstr() robust against 'ignorecase'.
 
 1.11	15-Jan-2013
 FIX: Factor out s:sort() and also use numerical sort in the one missed case.
