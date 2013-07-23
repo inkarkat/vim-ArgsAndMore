@@ -49,6 +49,9 @@ let g:loaded_ArgsAndMore = 1
 if ! exists('g:ArgsAndMore_AfterCommand')
     let g:ArgsAndMore_AfterCommand = 'sleep 100m'
 endif
+if ! exists('g:ArgsAndMore_InteractiveCommandPattern')
+    let g:ArgsAndMore_InteractiveCommandPattern = 's\%[ubstitute]\(\i\@!\S\).*\1\%([egiInp#lr]\)*c'
+endif
 
 
 "- commands --------------------------------------------------------------------
