@@ -14,6 +14,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.011	14-Jun-2013	Minor: Make matchstr() robust against
+"				'ignorecase'.
 "   1.20.010	01-Jun-2013	ENH: Enable syntax highlighting on :Argdo /
 "				:Bufdo on freshly loaded buffers when the
 "				command is an interactive one (:s///c, according
@@ -332,7 +334,7 @@ function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command, postCommand )
 	call s:Argdo(a:command, a:postCommand)
     else
 	try
-	    let l:range = matchstr(histget('cmd', -1), '\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
+	    let l:range = matchstr(histget('cmd', -1), '\C\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
 	    if empty(l:range) | throw 'Invalid range' | endif
 	    let l:limits = s:InterpretRange(l:range)
 	    if len(l:limits) != 2 || l:limits[0] > l:limits[1] | throw 'Invalid range' | endif
