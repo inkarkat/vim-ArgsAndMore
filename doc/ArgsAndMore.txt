@@ -128,7 +128,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					    *ArgsAndMore-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.007 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.012 or
   higher.
 
 ==============================================================================
@@ -166,6 +166,8 @@ HISTORY							 *ArgsAndMore-history*
 1.21	RELEASEME
 - FIX: Use the rules for the /pattern/ separator as stated in :help E146 in
   the default of g:ArgsAndMore_InteractiveCommandPattern.
+- Move escapings.vim into ingo-library. *** You need to update to ingo-library
+  (vimscript #4433) version 1.012! ***
 
 1.20	19-Jul-2013
 - Add dependency to ingo-library (vimscript #4433). *** You need to separately
