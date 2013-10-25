@@ -1,6 +1,7 @@
 " ArgsAndMore.vim: Apply commands to multiple buffers and manage the argument list.
 "
 " DEPENDENCIES:
+"   - ingo/buffer.vim autoload script
 "   - ingo/cmdargs/file.vim autoload script
 "   - ingo/collections.vim autoload script
 "   - ingo/compat.vim autoload script
@@ -14,6 +15,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.21.013	07-Oct-2013	Don't just check for 'buftype' of "nofile"; also
+"				exclude "nowrite", quickfix and help buffers.
 "   1.21.012	08-Aug-2013	Move escapings.vim into ingo-library.
 "   1.20.011	14-Jun-2013	Minor: Make matchstr() robust against
 "				'ignorecase'.
@@ -170,7 +173,7 @@ function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
     \   exists('g:syntax_on') &&
     \   ! exists('b:current_syntax') &&
     \   ! empty(&l:filetype) &&
-    \   &l:buftype !=# 'nofile' &&
+    \   ingo#buffer#IsPersisted() &&
     \   s:IsSyntaxSuppressed()
 	let l:save_eventignore = &eventignore
 	set eventignore-=Syntax
