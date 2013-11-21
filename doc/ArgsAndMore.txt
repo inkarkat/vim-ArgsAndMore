@@ -167,6 +167,7 @@ HISTORY							 *ArgsAndMore-history*
 - FIX: Use the rules for the /pattern/ separator as stated in :help E146 in
   the default of g:ArgsAndMore_InteractiveCommandPattern.
 - Minor: Exclude further special buffers from syntax enabling.
+- :ArgsList also handles ** and [...] wildcards.
 - Move escapings.vim into ingo-library. *** You need to update to ingo-library
   (vimscript #4433) version 1.014! ***
 
