@@ -163,7 +163,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-1.21	RELEASEME
+1.21	22-Nov-2013
 - FIX: Use the rules for the /pattern/ separator as stated in :help E146 in
   the default of g:ArgsAndMore_InteractiveCommandPattern.
 - Minor: Exclude further special buffers from syntax enabling.
