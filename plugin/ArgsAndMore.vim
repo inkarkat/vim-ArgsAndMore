@@ -4,12 +4,14 @@
 "   - Requires Vim 7.0 or higher.
 "   - ArgsAndMore.vim autoload script
 "
-" Copyright: (C) 2012 Ingo Karkat
+" Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.21.009	24-Jul-2013	FIX: Use the rules for the /pattern/ separator
+"				as stated in :help E146.
 "   1.20.008	21-Apr-2013	Change -range=-1 default check to use <count>,
 "				which maintains the actual -1 default, and
 "				therefore also delivers correct results when on
@@ -50,7 +52,7 @@ if ! exists('g:ArgsAndMore_AfterCommand')
     let g:ArgsAndMore_AfterCommand = 'sleep 100m'
 endif
 if ! exists('g:ArgsAndMore_InteractiveCommandPattern')
-    let g:ArgsAndMore_InteractiveCommandPattern = 's\%[ubstitute]\(\i\@!\S\).*\1\%([egiInp#lr]\)*c'
+    let g:ArgsAndMore_InteractiveCommandPattern = 's\%[ubstitute]\([[:alnum:]\\"|]\@![\x00-\xFF]\).*\1\%([egiInp#lr]\)*c'
 endif
 
 
