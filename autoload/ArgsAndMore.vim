@@ -7,7 +7,7 @@
 "   - ingo/compat.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
-"   - ingo/regexp.vim autoload script
+"   - ingo/regexp/fromwildcard.vim autoload script
 "
 " Copyright: (C) 2012-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -15,6 +15,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.21.014	26-Oct-2013	Move from the simplistic
+"				ingo#regexp#FromWildcard() to
+"				ingo#regexp#fromwildcard#Convert() to handle all
+"				wildcards.
 "   1.21.013	07-Oct-2013	Don't just check for 'buftype' of "nofile"; also
 "				exclude "nowrite", quickfix and help buffers.
 "   1.21.012	08-Aug-2013	Move escapings.vim into ingo-library.
@@ -489,7 +493,7 @@ endfunction
 function! ArgsAndMore#ArgsList( isBang, fileglob )
     let l:isFullPath = (! empty(a:fileglob) || a:isBang)
     if ! empty(a:fileglob)
-	let l:pattern = ingo#regexp#FromWildcard(a:fileglob, '')
+	let l:pattern = ingo#regexp#fromwildcard#Convert(a:fileglob)
     endif
 
     echohl Title
