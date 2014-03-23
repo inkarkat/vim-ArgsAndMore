@@ -112,7 +112,14 @@ USAGE							   *ArgsAndMore-usage*
 					      *:LListToArgs* *:LListToArgsAdd*
 :LListToArgs		Convert the files in the window's location list to
 :[count]LListToArgsAdd	arguments.
-
+							     *:CList* *:LList*
+:CList[!], :LList[!]   	List each file that has listed errors in the quickfix
+			/ location list in a neat list. With [!], expand all
+			to absolute filespecs.
+:CList[!] {glob}	List each file that has listed errors in the quickfix
+:LList[!] {glob}	/ location list that matches (with [!]: does not
+			match) {glob} in a neat list. Matching and printing is
+			done to the full filespec.
 
 ==============================================================================
 INSTALLATION					    *ArgsAndMore-installation*
@@ -162,6 +169,10 @@ IDEAS							   *ArgsAndMore-ideas*
 
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
+
+1.22	RELEASEME
+- Add :CList and :LList, analog to :ArgsList.
+- FIX: :ArgsList printed "cnt" is zero-based, not 1-based.
 
 1.21	22-Nov-2013
 - FIX: Use the rules for the /pattern/ separator as stated in :help E146 in
