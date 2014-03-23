@@ -10,6 +10,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.22.010	11-Dec-2013	Add :CList and :LList, analog to :ArgsList.
 "   1.21.009	24-Jul-2013	FIX: Use the rules for the /pattern/ separator
 "				as stated in :help E146.
 "   1.20.008	21-Apr-2013	Change -range=-1 default check to use <count>,
@@ -88,6 +89,8 @@ command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated(
 " Note: Must use * instead of ?; otherwise (due to -complete=file), Vim
 " complains about globs with "E77: Too many file names".
 command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(<bang>0, <q-args>)
+command! -bar -bang -nargs=* -complete=file CList call ArgsAndMore#QuickfixList(getqflist(), <bang>0, <q-args>)
+command! -bar -bang -nargs=* -complete=file LList call ArgsAndMore#QuickfixList(getloclist(0), <bang>0, <q-args>)
 
 command! -bar ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix()
 
