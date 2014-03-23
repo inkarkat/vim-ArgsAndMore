@@ -15,6 +15,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.22.015	11-Dec-2013	Factor out s:List() and
+"				s:GetQuickfixFilespecs(). Reuse them for
+"				ArgsAndMore#QuickfixList().
+"				FIX: :ArgsList printed "cnt" is zero-based, not
+"				1-based.
+"				Do not print title on :ArgsList when there are
+"				no arguments.
 "   1.21.014	26-Oct-2013	Move from the simplistic
 "				ingo#regexp#FromWildcard() to
 "				ingo#regexp#fromwildcard#Convert() to handle all
@@ -490,27 +497,34 @@ endfunction
 
 
 
-function! ArgsAndMore#ArgsList( isBang, fileglob )
+function! s:List( files, currentIdx, isBang, fileglob )
     let l:isFullPath = (! empty(a:fileglob) || a:isBang)
     if ! empty(a:fileglob)
 	let l:pattern = ingo#regexp#fromwildcard#Convert(a:fileglob)
     endif
 
-    echohl Title
-    echo '   cnt	file'
-    echohl None
-
-    for l:argIdx in range(argc())
-	let l:argFilespec = argv(l:argIdx)
+    let l:hasPrintedTitle = 0
+    for l:fileIdx in range(len(a:files))
+	let l:filespec = a:files[l:fileIdx]
 	if l:isFullPath
-	    let l:argFilespec = fnamemodify(l:argFilespec, ':p')
+	    let l:filespec = fnamemodify(l:filespec, ':p')
 	endif
-	if ! empty(a:fileglob) && (! a:isBang && l:argFilespec !~ l:pattern || a:isBang && l:argFilespec =~ l:pattern)
+	if ! empty(a:fileglob) && (! a:isBang && l:filespec !~ l:pattern || a:isBang && l:filespec =~ l:pattern)
 	    continue
 	endif
 
-	echo (l:argIdx == argidx() ? '*' : ' ') . printf('%3d', l:argIdx) . "\t" . l:argFilespec
+	if ! l:hasPrintedTitle
+	    let l:hasPrintedTitle = 1
+
+	    echohl Title
+	    echo '   cnt	file'
+	    echohl None
+	endif
+	echo (l:fileIdx == a:currentIdx ? '*' : ' ') . printf('%3d', l:fileIdx + 1) . "\t" . l:filespec
     endfor
+endfunction
+function! ArgsAndMore#ArgsList( isBang, fileglob )
+    call s:List(argv(), argidx(), a:isBang, a:fileglob)
 endfunction
 
 
@@ -520,6 +534,30 @@ function! ArgsAndMore#ArgsToQuickfix()
     silent doautocmd QuickFixCmdPost args | " Allow hooking into the quickfix update.
 endfunction
 
+
+function! s:GetQuickfixFilespecs( list, existingFilespecs )
+    let l:existingFilespecs = ingo#collections#ToDict(a:existingFilespecs)
+    let l:addedBufnrs = {}
+    let l:filespecs = []
+    for l:bufnr in map(a:list, 'v:val.bufnr')
+	if has_key(l:addedBufnrs, l:bufnr)
+	    continue
+	endif
+	let l:addedBufnrs[l:bufnr] = 1
+
+	let l:filespec = bufname(l:bufnr)
+	if has_key(l:existingFilespecs, l:filespec)
+	    continue
+	endif
+
+	call add(l:filespecs, l:filespec)
+    endfor
+
+    return [len(l:addedBufnrs), l:filespecs]
+endfunction
+function! ArgsAndMore#QuickfixList( list, isBang, fileglob )
+    call s:List(s:GetQuickfixFilespecs(a:list, [])[1], -1, a:isBang, a:fileglob)
+endfunction
 
 function! s:ExecuteWithoutWildignore( excommand, filespecs )
 "*******************************************************************************
@@ -556,25 +594,10 @@ function! ArgsAndMore#QuickfixToArgs( list, isArgAdd, count, bang )
 	silent execute printf('1,%dargdelete', argc())
     endif
 
-    let l:addedBufnrs = {}
-    let l:filespecs = []
-    let l:existingArguments = ingo#collections#ToDict(argv())
-    for l:bufnr in map(a:list, 'v:val.bufnr')
-	if has_key(l:addedBufnrs, l:bufnr)
-	    continue
-	endif
-	let l:addedBufnrs[l:bufnr] = 1
-
-	let l:filespec = bufname(l:bufnr)
-	if has_key(l:existingArguments, l:filespec)
-	    continue
-	endif
-
-	call add(l:filespecs, l:filespec)
-    endfor
+    let [l:quickfixBufferCnt, l:filespecs] = s:GetQuickfixFilespecs(a:list, argv())
 
     if len(l:filespecs) == 0
-	echo printf('No new arguments in %d unique item%s', len(l:addedBufnrs), (len(l:addedBufnrs) == 1 ? '' : 's'))
+	echo printf('No new arguments in %d unique item%s', l:quickfixBufferCnt, (l:quickfixBufferCnt == 1 ? '' : 's'))
     else
 	let l:command = (a:isArgAdd ? (a:count ? a:count : '') . 'argadd' : 'args' . a:bang)
 	call s:ExecuteWithoutWildignore(l:command, l:filespecs)
