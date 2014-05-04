@@ -72,9 +72,16 @@ USAGE							   *ArgsAndMore-usage*
 			use |:ArgdoErrors| and |:ArgdoDeleteSuccessful|.
 			Also, any encountered errors are put into the
 			|quickfix| list.
-								 *:ArgdoWrite*
+					    *:ArgdoWrite* *:ArgdoConfirmWrite*
 :ArgdoWrite {cmd}	Execute {cmd} in each buffer in the argument list and
 			automatically persist any changes (|:update|).
+:ArgdoConfirmWrite {cmd}
+			Like |:ArgdoWrite|, but confirm each write, allowing
+			to review the automatically applied changes of {cmd}
+			before persisting them. When you quit the argument
+			processing before the last argument, this will not
+			return to the original file (to make it easier to
+			process the remaining arguments again).
 
 								*:ArgdoErrors*
 :ArgdoErrors		List all error messages that occurred during the last
@@ -135,7 +142,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					    *ArgsAndMore-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.014 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.017 or
   higher.
 
 ==============================================================================
@@ -170,9 +177,13 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-1.22	RELEASEME
+1.22	24-Mar-2014
 - Add :CList and :LList, analog to :ArgsList.
 - FIX: :ArgsList printed "cnt" is zero-based, not 1-based.
+- Add :ArgdoConfirmWrite variant of :ArgdoWrite.
+- Also catch custom exceptions and errors caused by the passed user command
+  (or configured post-command). *** You need to update to ingo-library
+  (vimscript #4433) version 1.017! ***
 
 1.21	22-Nov-2013
 - FIX: Use the rules for the /pattern/ separator as stated in :help E146 in
@@ -225,7 +236,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2013 Ingo Karkat
+Copyright: (C) 2012-2014 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
