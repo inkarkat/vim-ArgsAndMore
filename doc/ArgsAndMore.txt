@@ -177,6 +177,9 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
+1.23	RELEASEME
+- Use ingo#msg#WarningMsg().
+
 1.22	24-Mar-2014
 - Add :CList and :LList, analog to :ArgsList.
 - FIX: :ArgsList printed "cnt" is zero-based, not 1-based.
