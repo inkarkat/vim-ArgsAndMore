@@ -33,6 +33,8 @@ RELATED WORKS								     *
 - Pretty Args (vimscript #4681) provides an :Arg command which takes
   filename-modifiers to print a shortened argument list, e.g. just the
   filenames.
+- JustDo (vimscript #4981) provides a :BufDo command that skips unmodifiable
+  buffers.
 
 ==============================================================================
 USAGE							   *ArgsAndMore-usage*
