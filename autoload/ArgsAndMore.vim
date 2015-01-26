@@ -10,12 +10,15 @@
 "   - ingo/query/substitute.vim autoload script
 "   - ingo/regexp/fromwildcard.vim autoload script
 "
-" Copyright: (C) 2012-2014 Ingo Karkat
+" Copyright: (C) 2012-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.23.018	27-Jan-2015	ENH: Keep previous (last accessed) window on
+"				:Windo and :Winbufdo. Thanks to Daniel Hahler
+"				for the patch.
 "   1.23.017	05-May-2014	Use ingo#msg#WarningMsg().
 "   1.22.016	24-Mar-2014	Also catch custom exceptions and errors caused
 "				by the passed user command (or configured
@@ -106,7 +109,9 @@ function! ArgsAndMore#Windo( command )
     " sizes and restore them after visiting all windows.
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
+	let l:previousWinNr = winnr('#') ? winnr('#') : 1
 	    windo call s:Execute(a:command)
+	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
@@ -119,6 +124,7 @@ function! ArgsAndMore#Winbufdo( command )
     " sizes and restore them after visiting all windows.
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
+	let l:previousWinNr = winnr('#') ? winnr('#') : 1
 
 	    windo
 	    \   if index(l:buffers, bufnr('')) == -1 |
@@ -126,6 +132,7 @@ function! ArgsAndMore#Winbufdo( command )
 	    \       call s:Execute(a:command)
 	    \   endif
 
+	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
