@@ -22,6 +22,9 @@
 "				ENH: Keep alternate buffer (#) on :Argdo
 "				commands. Thanks to Daniel Hahler for the
 "				suggestion.
+"				Handle modified buffers together with :set
+"				nohidden when restoring the original buffer
+"				after :Argdo by using :hide.
 "   1.23.017	05-May-2014	Use ingo#msg#WarningMsg().
 "   1.22.016	24-Mar-2014	Also catch custom exceptions and errors caused
 "				by the passed user command (or configured
@@ -171,7 +174,10 @@ function! s:ArgumentListRestoreCommand()
 	call insert(l:restoreCommands, bufnr('#') . 'buffer', -1)
     endif
 
-    return join(l:restoreCommands, '|')
+    return join(
+    \   map(l:restoreCommands, '"hide " . v:val'),
+    \   '|'
+    \)
 endfunction
 let s:errors = []
 function! s:ErrorToQuickfixEntry( error )
