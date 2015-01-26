@@ -16,6 +16,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.23.017	05-May-2014	Use ingo#msg#WarningMsg().
 "   1.22.016	24-Mar-2014	Also catch custom exceptions and errors caused
 "				by the passed user command (or configured
 "				post-command).
@@ -483,10 +484,7 @@ function! ArgsAndMore#ArgsFilter( filterExpression )
     endtry
 
     if len(l:deletedArgs) == 0
-	let v:warningmsg = 'No arguments filtered out'
-	echohl WarningMsg
-	echomsg v:warningmsg
-	echohl None
+	call ingo#msg#WarningMsg('No arguments filtered out')
     else
 	echo printf('Deleted %d/%d: %s', len(l:deletedArgs), l:originalArgNum, join(l:deletedArgs))
     endif
