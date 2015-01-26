@@ -19,6 +19,9 @@
 "   1.23.018	27-Jan-2015	ENH: Keep previous (last accessed) window on
 "				:Windo and :Winbufdo. Thanks to Daniel Hahler
 "				for the patch.
+"				ENH: Keep alternate buffer (#) on :Argdo
+"				commands. Thanks to Daniel Hahler for the
+"				suggestion.
 "   1.23.017	05-May-2014	Use ingo#msg#WarningMsg().
 "   1.22.016	24-Mar-2014	Also catch custom exceptions and errors caused
 "				by the passed user command (or configured
@@ -152,17 +155,23 @@ endfunction
 
 function! s:ArgumentListRestoreCommand()
     " Restore the current argument index.
-    let l:restoreCommand = (argidx() + 1) . 'argument'
+    let l:restoreCommands = [(argidx() + 1) . 'argument']
 
     " When the current file isn't in the argument list, restore that buffer,
     " too.
     " argidx() doesn't tell whether we're in the N'th file of the argument list,
     " or in an unrelated file. Need to compare the actual filenames to be sure.
     if argc() == 0 || argv(argidx()) !=# expand('%')
-	let l:restoreCommand .= '|' . bufnr('') . 'buffer'
+	call add(l:restoreCommands, bufnr('') . 'buffer')
     endif
 
-    return l:restoreCommand
+    " Restore the alternate buffer; since the # register is read-only, we have
+    " to briefly revisit the buffer.
+    if bufnr('#') != -1
+	call insert(l:restoreCommands, bufnr('#') . 'buffer', -1)
+    endif
+
+    return join(l:restoreCommands, '|')
 endfunction
 let s:errors = []
 function! s:ErrorToQuickfixEntry( error )
