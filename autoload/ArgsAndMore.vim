@@ -16,6 +16,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.23.019	29-Jan-2015	Vim 7.4.605 makes the alternate file register "#
+"				writable, so we don't need to revisit the buffer.
 "   1.23.018	27-Jan-2015	ENH: Keep previous (last accessed) window on
 "				:Windo and :Winbufdo. Thanks to Daniel Hahler
 "				for the patch.
@@ -162,14 +164,20 @@ function! s:JoinCommands( commands )
     \   '|'
     \)
 endfunction
+function! s:RestoreAlternateBuffer( restoreCommands )
+    if bufnr('#') != -1
+	if v:version == 704 && has('patch605') || v:version > 704
+	    call add(a:restoreCommands, 'let @# = ' . bufnr('#'))
+	else
+	    " Since the # register is read-only, we have to briefly revisit the
+	    " buffer before the last command that restores the original buffer.
+	    call insert(a:restoreCommands, bufnr('#') . 'buffer', -1)
+	endif
+    endif
+endfunction
 function! s:BufferListRestoreCommand()
     let l:restoreCommands = [bufnr('') . 'buffer']
-
-    " Restore the alternate buffer; since the # register is read-only, we have
-    " to briefly revisit the buffer.
-    if bufnr('#') != -1
-	call insert(l:restoreCommands, bufnr('#') . 'buffer', -1)
-    endif
+    call s:RestoreAlternateBuffer(l:restoreCommands)
 
     return s:JoinCommands(l:restoreCommands)
 endfunction
@@ -185,12 +193,8 @@ function! s:ArgumentListRestoreCommand()
 	call add(l:restoreCommands, bufnr('') . 'buffer')
     endif
 
-    " Restore the alternate buffer; since the # register is read-only, we have
-    " to briefly revisit the buffer.
-    if bufnr('#') != -1
-	call insert(l:restoreCommands, bufnr('#') . 'buffer', -1)
-    endif
-
+    call s:RestoreAlternateBuffer(l:restoreCommands)
+echomsg '****' string(l:restoreCommands)
     return s:JoinCommands(l:restoreCommands)
 endfunction
 let s:errors = []
