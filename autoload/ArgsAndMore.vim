@@ -19,12 +19,12 @@
 "   1.23.018	27-Jan-2015	ENH: Keep previous (last accessed) window on
 "				:Windo and :Winbufdo. Thanks to Daniel Hahler
 "				for the patch.
-"				ENH: Keep alternate buffer (#) on :Argdo
-"				commands. Thanks to Daniel Hahler for the
+"				ENH: Keep alternate buffer (#) on :Argdo and
+"				:Bufdo commands. Thanks to Daniel Hahler for the
 "				suggestion.
 "				Handle modified buffers together with :set
 "				nohidden when restoring the original buffer
-"				after :Argdo by using :hide.
+"				after :Argdo and :Bufdo by using :hide.
 "   1.23.017	05-May-2014	Use ingo#msg#WarningMsg().
 "   1.22.016	24-Mar-2014	Also catch custom exceptions and errors caused
 "				by the passed user command (or configured
@@ -63,7 +63,7 @@
 "				:Bufdo.
 "   1.12.007	15-Mar-2013	Use ingo/msg.vim error functions. Obsolete
 "				s:ErrorMsg() and s:MsgFromException().
-"				ENH: Add errors from :Argdo and :BufDo to the
+"				ENH: Add errors from :Argdo and :Bufdo to the
 "				quickfix list to allow easier rework.
 "   1.12.006	21-Feb-2013	Move ingocollections.vim to ingo-library.
 "   1.11.005	15-Jan-2013	FIX: Factor out s:sort() and also use numerical
@@ -156,6 +156,23 @@ function! ArgsAndMore#Tabwindo( command )
 endfunction
 
 
+function! s:JoinCommands( commands )
+    return join(
+    \   map(a:commands, '"hide " . v:val'),
+    \   '|'
+    \)
+endfunction
+function! s:BufferListRestoreCommand()
+    let l:restoreCommands = [bufnr('') . 'buffer']
+
+    " Restore the alternate buffer; since the # register is read-only, we have
+    " to briefly revisit the buffer.
+    if bufnr('#') != -1
+	call insert(l:restoreCommands, bufnr('#') . 'buffer', -1)
+    endif
+
+    return s:JoinCommands(l:restoreCommands)
+endfunction
 function! s:ArgumentListRestoreCommand()
     " Restore the current argument index.
     let l:restoreCommands = [(argidx() + 1) . 'argument']
@@ -174,10 +191,7 @@ function! s:ArgumentListRestoreCommand()
 	call insert(l:restoreCommands, bufnr('#') . 'buffer', -1)
     endif
 
-    return join(
-    \   map(l:restoreCommands, '"hide " . v:val'),
-    \   '|'
-    \)
+    return s:JoinCommands(l:restoreCommands)
 endfunction
 let s:errors = []
 function! s:ErrorToQuickfixEntry( error )
@@ -454,7 +468,7 @@ endfunction
 function! ArgsAndMore#Bufdo( command, postCommand )
     " Structure here like in s:Argdo().
 
-    let l:originalBufNr = bufnr('')
+    let l:restoreCommand = s:BufferListRestoreCommand()
 
     let l:save_more = &more
     set nomore
@@ -472,7 +486,7 @@ function! ArgsAndMore#Bufdo( command, postCommand )
 	call ingo#msg#VimExceptionMsg()
     endtry
 
-    silent! execute l:originalBufNr . 'buffer'
+    silent! execute l:restoreCommand
 
     call s:ErrorsToQuickfix('bufdo')
     if len(s:errors) == 1
