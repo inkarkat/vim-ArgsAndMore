@@ -40,34 +40,31 @@ RELATED WORKS								     *
 USAGE							   *ArgsAndMore-usage*
 
 								      *:Bufdo*
-:Bufdo {cmd}		Execute {cmd} in each buffer in the buffer list, then
+:[range]Bufdo {cmd}	Execute {cmd} in each buffer in the buffer list, then
 			return back to the original one.
 			Any encountered errors are also put into the
 			|quickfix| list.
 								 *:BufdoWrite*
-:BufdoWrite {cmd}	Execute {cmd} in each buffer in the buffer list and
+:[range]BufdoWrite {cmd}Execute {cmd} in each buffer in the buffer list and
 			automatically persist any changes (|:update|).
 								      *:Windo*
-:Windo {cmd}		Execute {cmd} in each window, then return back to the
+:[range]Windo {cmd}	Execute {cmd} in each window, then return back to the
 			original one.
 								   *:Winbufdo*
-:Winbufdo {cmd}		Execute {cmd} in each different buffer shown in one of
+:[range]Winbufdo {cmd}	Execute {cmd} in each different buffer shown in one of
 			the windows in the current tab page (once per buffer),
 			then return back to the original one.
 								      *:Tabdo*
-:Tabdo {cmd}	        Execute {cmd} once in each tab page, then return back
+:[range]Tabdo {cmd}	Execute {cmd} once in each tab page, then return back
 			to the original one.
 								   *:Tabwindo*
-:Tabwindo {cmd}		Execute {cmd} in each open window on each tab page,
+:[range]Tabwindo {cmd}	Execute {cmd} in each open window on each tab page,
 			then return back to the original one.
 								      *:Argdo*
-:Argdo {cmd}		Execute {cmd} for each file in the argument list, then
+:[range]Argdo {cmd}	Execute {cmd} for each file in the argument list, then
 			return back to the original file and argument.
-:{range}Argdo {cmd}	Execute {cmd} for the {range} of indices from the
-			argument list, then return back to the original file
-			and argument.
-			For example, to execute {cmd} on the remaining
-			arguments, use :.,$Argdo {cmd}
+			[range] is emulated for older Vim versions, but can
+			only be used interactively (not in scripts).
 
 			In contrast to |:argdo|, this also avoids the
 			|hit-enter| prompt (all files will be processed
@@ -78,9 +75,9 @@ USAGE							   *ArgsAndMore-usage*
 			Also, any encountered errors are put into the
 			|quickfix| list.
 					    *:ArgdoWrite* *:ArgdoConfirmWrite*
-:ArgdoWrite {cmd}	Execute {cmd} in each buffer in the argument list and
+:[range]ArgdoWrite {cmd}Execute {cmd} in each buffer in the argument list and
 			automatically persist any changes (|:update|).
-:ArgdoConfirmWrite {cmd}
+:[range]ArgdoConfirmWrite {cmd}
 			Like |:ArgdoWrite|, but confirm each write, allowing
 			to review the automatically applied changes of {cmd}
 			before persisting them. When you quit the argument
@@ -182,7 +179,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-1.23	RELEASEME
+2.00	RELEASEME
 - Use ingo#msg#WarningMsg().
 - ENH: Keep previous (last accessed) window on :Windo. Thanks to Daniel Hahler
   for the patch.
@@ -193,6 +190,9 @@ HISTORY							 *ArgsAndMore-history*
 - FIX: :Argdo may fail to restore the original buffer. Ensure that argidx()
   actually points to valid argument; this may not be the case when arguments
   have only been :argadd'ed, but not visited yet.
+- Support the -addr=arguments attribute in Vim 7.4.530 or later for :Argdo...
+  commands. With that, relative addressing can also be used non-interactively.
+- Support ranges in :Bufdo..., :Windo..., :Tabdo... if supported by Vim.
 
 1.22	24-Mar-2014
 - Add :CList and :LList, analog to :ArgsList.
