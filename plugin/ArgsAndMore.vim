@@ -80,7 +80,7 @@ if v:version == 704 && has('patch530') || v:version > 704
 command! -addr=arguments -range=-1 -nargs=1 -complete=command Argdo             call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, '')
 command! -addr=arguments -range=-1 -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, 'update')
 command! -addr=arguments -range=-1 -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\								call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
+\                                                                               call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
 else
 " Note: Cannot use -range and <line1>, <line2>, because in them, identifiers
 " like ".+1" and "$" are translated into buffer line numbers, and we need
@@ -90,7 +90,7 @@ else
 command! -range=-1 -nargs=1 -complete=command Argdo             call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, '')
 command! -range=-1 -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, 'update')
 command! -range=-1 -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\								call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
+\                                                               call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
 endif
 
 command! -bar ArgdoErrors call ArgsAndMore#ArgdoErrors()
