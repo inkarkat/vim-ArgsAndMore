@@ -4,12 +4,13 @@
 "   - Requires Vim 7.0 or higher.
 "   - ArgsAndMore.vim autoload script
 "
-" Copyright: (C) 2012-2013 Ingo Karkat
+" Copyright: (C) 2012-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.22.011	24-Mar-2014	Add :ArgdoConfirmWrite variant of :ArgdoWrite.
 "   1.22.010	11-Dec-2013	Add :CList and :LList, analog to :ArgsList.
 "   1.21.009	24-Jul-2013	FIX: Use the rules for the /pattern/ separator
 "				as stated in :help E146.
@@ -76,8 +77,10 @@ command! -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo(<q-arg
 " argument indices! Instead, use -range=-1 as a marker, and extract the original
 " range from the command history. (This means that we can only use the command
 " interactively, not in a script.)
-command! -range=-1 -nargs=1 -complete=command Argdo      call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, '')
-command! -range=-1 -nargs=1 -complete=command ArgdoWrite call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, 'update')
+command! -range=-1 -nargs=1 -complete=command Argdo             call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, '')
+command! -range=-1 -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, 'update')
+command! -range=-1 -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
+\								call ArgsAndMore#ArgdoWrapper((<count> == -1), <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
 command! -bar ArgdoErrors call ArgsAndMore#ArgdoErrors()
 command! -bar ArgdoDeleteSuccessful call ArgsAndMore#ArgdoDeleteSuccessful()
 
