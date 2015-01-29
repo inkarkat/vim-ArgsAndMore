@@ -10,7 +10,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.30.012	30-Jan-2015	Support the -addr=arguments attribute in Vim
+"   2.00.012	30-Jan-2015	Support the -addr=arguments attribute in Vim
 "				7.4.530 or later for :Argdo... commands. With
 "				that, relative addressing can also be used
 "				non-interactively.
@@ -77,10 +77,10 @@ command! -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo(<q-arg
 
 " Note: No -bar; can take a sequence of Vim commands.
 if v:version == 704 && has('patch530') || v:version > 704
-command! -addr=arguments -range=-1 -nargs=1 -complete=command Argdo             call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, '')
-command! -addr=arguments -range=-1 -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, 'update')
-command! -addr=arguments -range=-1 -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\                                                                               call ArgsAndMore#ArgdoAddr((<count> == -1), <line1>, <line2>, <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
+command! -addr=arguments -range=% -nargs=1 -complete=command Argdo             call ArgsAndMore#Argdo('<line1>,<line2>', <q-args>, '')
+command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#Argdo('<line1>,<line2>', <q-args>, 'update')
+command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
+\                                                                              call ArgsAndMore#Argdo('<line1>,<line2>', <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
 else
 " Note: Cannot use -range and <line1>, <line2>, because in them, identifiers
 " like ".+1" and "$" are translated into buffer line numbers, and we need
