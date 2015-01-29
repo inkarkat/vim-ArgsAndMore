@@ -16,6 +16,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.30.020	30-Jan-2015	Add ArgsAndMore#ArgdoAddr() for the :Argdo
+"				variant that can use the -addr=arguments
+"				attribute.
 "   1.23.019	29-Jan-2015	Vim 7.4.605 makes the alternate file register "#
 "				writable, so we don't need to revisit the buffer.
 "				FIX: :Argdo may fail to restore the original
@@ -334,7 +337,7 @@ function! s:Argdo( command, postCommand )
     " error message.
     let &more = l:save_more
 endfunction
-function! s:ArgIterate( startIdx, endIdx, command, postCommand )
+function! s:ArgIterate( startArg, endArg, command, postCommand )
     " Structure here like in s:Argdo().
 
     let l:restoreCommand = s:ArgumentListRestoreCommand()
@@ -350,19 +353,19 @@ function! s:ArgIterate( startIdx, endIdx, command, postCommand )
     let l:save_more = &more
     set nomore
 
-    let s:range = [a:startIdx, a:endIdx]
+    let s:range = [a:startArg, a:endArg]
     let s:errors = []
     let l:isAborted = 0
 
     try
-	for l:idx in range(a:startIdx, a:endIdx)
+	for l:arg in range(a:startArg, a:endArg)
 	    " This is not :argdo; the printed error messages will be overwritten
 	    " by the messages resulting from the switch to the next argument. To
 	    " avoid this and keep both file changes as well as error messages
 	    " interspersed on the screen, capture the output from the file
 	    " change and :echo it ourselves.
 	    redir => l:nextArgumentOutput
-		silent execute l:idx . 'argument'
+		silent execute l:arg . 'argument'
 	    redir END
 	    let l:nextArgumentOutput = substitute(l:nextArgumentOutput, '^\_s*', '', '')
 	    if ! empty(l:nextArgumentOutput)
@@ -433,6 +436,13 @@ function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command, postCommand )
 	catch
 	    call ingo#msg#ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	endtry
+    endif
+endfunction
+function! ArgsAndMore#ArgdoAddr( isNoRangeGiven, startArg, endArg, command, postCommand )
+    if a:isNoRangeGiven
+	call s:Argdo(a:command, a:postCommand)
+    else
+	call s:ArgIterate(a:startArg, a:endArg, a:command, a:postCommand)
     endif
 endfunction
 
