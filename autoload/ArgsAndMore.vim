@@ -18,6 +18,11 @@
 " REVISION	DATE		REMARKS
 "   1.23.019	29-Jan-2015	Vim 7.4.605 makes the alternate file register "#
 "				writable, so we don't need to revisit the buffer.
+"				FIX: :Argdo may fail to restore the original
+"				buffer. Ensure that argidx() actually points to
+"				valid argument; this may not be the case when
+"				arguments have only been :argadd'ed, but not
+"				visited yet.
 "   1.23.018	27-Jan-2015	ENH: Keep previous (last accessed) window on
 "				:Windo and :Winbufdo. Thanks to Daniel Hahler
 "				for the patch.
@@ -182,8 +187,12 @@ function! s:BufferListRestoreCommand()
     return s:JoinCommands(l:restoreCommands)
 endfunction
 function! s:ArgumentListRestoreCommand()
+    let l:restoreCommands = []
+
     " Restore the current argument index.
-    let l:restoreCommands = [(argidx() + 1) . 'argument']
+    if argidx() < argc()    " The index can be beyond if arguments have been :argadd'ed, but not yet visited.
+	call add(l:restoreCommands, (argidx() + 1) . 'argument')
+    endif
 
     " When the current file isn't in the argument list, restore that buffer,
     " too.
@@ -194,7 +203,7 @@ function! s:ArgumentListRestoreCommand()
     endif
 
     call s:RestoreAlternateBuffer(l:restoreCommands)
-echomsg '****' string(l:restoreCommands)
+"****D echomsg '****' string(l:restoreCommands)
     return s:JoinCommands(l:restoreCommands)
 endfunction
 let s:errors = []
