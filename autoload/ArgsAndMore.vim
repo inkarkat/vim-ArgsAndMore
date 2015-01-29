@@ -16,9 +16,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.30.020	30-Jan-2015	Add ArgsAndMore#ArgdoAddr() for the :Argdo
-"				variant that can use the -addr=arguments
-"				attribute.
+"   2.00.020	30-Jan-2015	Expose s:Argdo() and add a:range argument for
+"				the :Argdo variant that can use the
+"				-addr=arguments attribute.
 "   1.23.019	29-Jan-2015	Vim 7.4.605 makes the alternate file register "#
 "				writable, so we don't need to revisit the buffer.
 "				FIX: :Argdo may fail to restore the original
@@ -285,7 +285,7 @@ function! s:ArgExecute( command, postCommand, isEnableSyntax )
 
     call s:AfterExecute()
 endfunction
-function! s:Argdo( command, postCommand )
+function! ArgsAndMore#Argdo( range, command, postCommand )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     " Temporarily turn off 'more', as this interferes with the "automated batch
@@ -311,7 +311,7 @@ function! s:Argdo( command, postCommand )
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	argdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)
+	execute a:range . 'argdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -338,7 +338,7 @@ function! s:Argdo( command, postCommand )
     let &more = l:save_more
 endfunction
 function! s:ArgIterate( startArg, endArg, command, postCommand )
-    " Structure here like in s:Argdo().
+    " Structure here like in ArgsAndMore#Argdo().
 
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
@@ -425,7 +425,7 @@ function! s:InterpretRange( rangeExpr )
 endfunction
 function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command, postCommand )
     if a:isNoRangeGiven
-	call s:Argdo(a:command, a:postCommand)
+	call ArgsAndMore#Argdo('', a:command, a:postCommand)
     else
 	try
 	    let l:range = matchstr(histget('cmd', -1), '\C\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
@@ -436,13 +436,6 @@ function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command, postCommand )
 	catch
 	    call ingo#msg#ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	endtry
-    endif
-endfunction
-function! ArgsAndMore#ArgdoAddr( isNoRangeGiven, startArg, endArg, command, postCommand )
-    if a:isNoRangeGiven
-	call s:Argdo(a:command, a:postCommand)
-    else
-	call s:ArgIterate(a:startArg, a:endArg, a:command, a:postCommand)
     endif
 endfunction
 
@@ -489,7 +482,7 @@ function! ArgsAndMore#ArgdoDeleteSuccessful()
 endfunction
 
 function! ArgsAndMore#Bufdo( command, postCommand )
-    " Structure here like in s:Argdo().
+    " Structure here like in ArgsAndMore#Argdo().
 
     let l:restoreCommand = s:BufferListRestoreCommand()
 
