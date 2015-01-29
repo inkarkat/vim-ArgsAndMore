@@ -190,6 +190,9 @@ HISTORY							 *ArgsAndMore-history*
   Daniel Hahler for the suggestion.
 - Handle modified buffers together with :set nohidden when restoring the
   original buffer after :Argdo and :Bufdo by using :hide.
+- FIX: :Argdo may fail to restore the original buffer. Ensure that argidx()
+  actually points to valid argument; this may not be the case when arguments
+  have only been :argadd'ed, but not visited yet.
 
 1.22	24-Mar-2014
 - Add :CList and :LList, analog to :ArgsList.
