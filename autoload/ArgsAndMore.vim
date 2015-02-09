@@ -264,7 +264,7 @@ function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
 	endtry
     endif
 endfunction
-function! s:ArgExecute( command, postCommand, isEnableSyntax )
+function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax )
     if a:isEnableSyntax
 	call s:EnableSyntaxHighlightingForInteractiveCommands(a:command)
     endif
@@ -273,7 +273,7 @@ function! s:ArgExecute( command, postCommand, isEnableSyntax )
 	let v:errmsg = ''
 	execute a:command
 	if ! empty(v:errmsg)
-	    call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')])
+	    call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')]) " As this is used for both arguments and buffers, record both.
 	endif
 	if ! empty(a:postCommand)
 	    let v:errmsg = ''
@@ -320,7 +320,7 @@ function! ArgsAndMore#Argdo( range, command, postCommand )
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute a:range . 'argdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute a:range . 'argdo call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -382,7 +382,7 @@ function! s:ArgIterate( startArg, endArg, command, postCommand )
 		echo l:nextArgumentOutput
 	    endif
 
-	    call s:ArgExecute(a:command, a:postCommand, 0)  " Without :argdo, we control the syntax suppression; no need to enable syntax during iteration.
+	    call s:ArgOrBufExecute(a:command, a:postCommand, 0)  " Without :argdo, we control the syntax suppression; no need to enable syntax during iteration.
 	endfor
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
@@ -507,7 +507,7 @@ function! ArgsAndMore#Bufdo( range, command, postCommand )
     " the command modified, but didn't update the buffer).
     try
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute a:range 'bufdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute a:range 'bufdo call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -729,6 +729,107 @@ function! ArgsAndMore#ConfirmedUpdate()
     else
 	throw 'ASSERT: Invalid choice: ' . s:choice
     endif
+endfunction
+
+function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr, command, postCommand )
+    let l:prefix = (a:isLocationList ? 'l' : 'c')
+
+    " Structure here like in ArgsAndMore#Argdo().
+
+    " Don't go to other windows / tabs that may already display a location.
+    let l:save_switchbuf = &switchbuf
+    set switchbuf=
+
+    if ingo#window#quickfix#IsQuickfixList()
+	" With empty 'switchbuf', the :cfirst command will find another window.
+	" Since we don't want to emulate Vim's built-in algorithm to know this
+	" target beforehand, just restore the original buffer (via the alternate
+	" file), and go back to the quickfix window. This means that we're
+	" losing the buffer's alternate file.
+	let l:restoreCommand = s:JoinCommands(['buffer #', l:prefix . 'open'])
+    else
+	let l:restoreCommand = s:BufferListRestoreCommand()
+    endif
+
+    if ! s:IsInteractiveCommand(a:command) && ! s:IsSyntaxSuppressed()
+	" Emulate the behavior of the built-in :argdo to disable syntax
+	" highlighting during to speed up the iteration, but consider our own
+	" enhancement, the exception for interactive commands.
+	let l:undoSuppressSyntax = 1
+	set eventignore+=Syntax
+    endif
+
+    let l:save_more = &more
+    set nomore
+
+    let s:errors = []
+    let l:isAborted = 0
+
+    let l:hasRange = (! empty(a:startBufNr) && ! empty(a:endBufNr))
+    let l:firstIteration = l:prefix . 'first'
+    let l:nextFileIteration = l:prefix . 'nfile'
+    let l:nextIteration = l:prefix . (a:isFiles ? 'nfile' : 'next')
+    let l:iterationCommand = l:firstIteration
+    try
+	while 1
+	    " This is not :argdo; the printed error messages will be overwritten
+	    " by the messages resulting from the switch to the next location. To
+	    " avoid this and keep both file changes as well as error messages
+	    " interspersed on the screen, capture the output from the file
+	    " change and :echo it ourselves.
+	    redir => l:nextLocationOutput
+		silent execute 'keepalt' l:iterationCommand
+	    redir END
+
+	    if l:hasRange && (bufnr('') < a:startBufNr || bufnr('') > a:endBufNr)
+		" Entry outside of range; skip to next file (before echoing, so
+		" that the iteration to that location is suppressed).
+		let l:iterationCommand = l:nextFileIteration
+		continue
+	    endif
+
+	    let l:nextLocationOutput = substitute(l:nextLocationOutput, '^\_s*', '', '')
+	    if ! empty(l:nextLocationOutput)
+		echo l:nextLocationOutput
+	    endif
+
+	    call s:ArgOrBufExecute(a:command, a:postCommand, 0)
+
+	    let l:iterationCommand = l:nextIteration
+	endwhile
+    catch /^Vim\%((\a\+)\)\=:E42:/ " E42: No Errors
+	call ingo#msg#VimExceptionMsg()
+	let l:isAborted = 1 " No need to restore; we haven't actually started iterating.
+    catch /^Vim\%((\a\+)\)\=:E553:/ " E553: No more items
+	" This is the expected end of iteration.
+    catch /^Vim\%((\a\+)\)\=:/
+	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
+	call ingo#msg#VimExceptionMsg()
+    catch /^ArgsAndMore: Aborted/
+	" This internal exception is thrown to stop the iteration through the
+	" argument list.
+	let l:isAborted = 1
+    finally
+	redir END
+
+	if exists('l:undoSuppressSyntax')
+	    set eventignore-=Syntax
+	endif
+	let &switchbuf = l:save_switchbuf
+    endtry
+
+    if ! l:isAborted
+	silent! execute l:restoreCommand
+    endif
+
+    if len(s:errors) == 1
+	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+    elseif len(s:errors) > 1
+	let l:locationNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:locationNumbers) == 1 ? '' : 's'), join(l:locationNumbers, ', ')))
+    endif
+
+    let &more = l:save_more
 endfunction
 
 let &cpo = s:save_cpo
