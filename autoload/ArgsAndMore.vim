@@ -733,6 +733,37 @@ function! ArgsAndMore#ConfirmedUpdate()
     endif
 endfunction
 
+function! s:GetCurrentQuickfixCnt( isLocationList )
+    let l:currentEntryCommand = (a:isLocationList ? 'll' : 'cc')
+
+    " The :cc command will echo something like "(3 of 42): ..." when the
+    " quickfix window isn't open.
+    let v:statusmsg = ''
+    silent execute 'keepalt' l:currentEntryCommand
+
+    if ! empty(v:statusmsg)
+	let l:currentCnt = matchstr(v:statusmsg, '^(\zs\d\+\ze ')
+	if ! empty(l:currentCnt)
+	    return str2nr(l:currentCnt)
+	endif
+    endif
+
+    " Else, the quickfix window must be open, so we have to go there and read
+    " off the current line.
+    let l:openCommand = (a:isLocationList ? 'l' : 'c') . 'open'
+
+    let l:originalWinNr = winnr()
+    let l:previousWinNr = winnr('#') ? winnr('#') : 1
+    try
+	noautocmd execute l:openCommand
+	let l:currentCnt = line('.')
+	noautocmd execute l:previousWinNr . 'wincmd w'
+	noautocmd execute l:originalWinNr . 'wincmd w'
+	return l:currentCnt
+    catch /^Vim\%((\a\+)\)\=:/
+	return -1
+    endtry
+endfunction
 function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr, command, postCommand )
     let l:prefix = (a:isLocationList ? 'l' : 'c')
 
@@ -773,7 +804,13 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
     let l:nextFileIteration = l:prefix . 'nfile'
     let l:nextIteration = l:prefix . (a:isFiles ? 'nfile' : 'next')
     let l:iterationCommand = l:firstIteration
+    let l:originalEntryCommand = ''
     try
+	let l:currentCnt = s:GetCurrentQuickfixCnt(a:isLocationList)
+	if l:currentCnt != -1
+	    let l:originalEntryCommand = s:JoinCommands([l:currentCnt . l:prefix . l:prefix])
+	endif
+
 	while 1
 	    " This is not :argdo; the printed error messages will be overwritten
 	    " by the messages resulting from the switch to the next location. To
@@ -822,13 +859,20 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
     finally
 	redir END
 
+	if ! l:isAborted
+	    " Restore the original quickfix entry.
+	    silent! noautocmd execute 'keepalt' l:originalEntryCommand
+	endif
+
 	if exists('l:undoSuppressSyntax')
 	    set eventignore-=Syntax
 	endif
+
 	let &switchbuf = l:save_switchbuf
     endtry
 
     if ! l:isAborted
+	" Then restore the original buffer.
 	silent! execute l:restoreCommand
     endif
 
