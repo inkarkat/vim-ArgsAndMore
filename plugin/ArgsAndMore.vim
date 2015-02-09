@@ -16,6 +16,8 @@
 "				non-interactively.
 "				Support ranges in :Bufdo..., :Windo...,
 "				:Tabdo... if supported by Vim.
+"				Support ranges in :ArgsList and :ArgsToQuickfix
+"				if supported by Vim.
 "   1.22.011	24-Mar-2014	Add :ArgdoConfirmWrite variant of :ArgdoWrite.
 "   1.22.010	11-Dec-2013	Add :CList and :LList, analog to :ArgsList.
 "   1.21.009	24-Jul-2013	FIX: Use the rules for the /pattern/ separator
@@ -114,11 +116,15 @@ command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated(
 
 " Note: Must use * instead of ?; otherwise (due to -complete=file), Vim
 " complains about globs with "E77: Too many file names".
-command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(<bang>0, <q-args>)
 command! -bar -bang -nargs=* -complete=file CList call ArgsAndMore#QuickfixList(getqflist(), <bang>0, <q-args>)
 command! -bar -bang -nargs=* -complete=file LList call ArgsAndMore#QuickfixList(getloclist(0), <bang>0, <q-args>)
-
-command! -bar ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix()
+if v:version == 704 && has('patch530') || v:version > 704
+command! -bar -bang -addr=arguments -range=% -nargs=* -complete=file ArgsList       call ArgsAndMore#ArgsList(<line1>, <line2>, <bang>0, <q-args>)
+command! -bar       -addr=arguments -range=%                         ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix(<line1>, <line2>)
+else
+command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(1, argc(), <bang>0, <q-args>)
+command! -bar ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix(1, argc())
+endif
 
 command! -bar -bang  CListToArgs    call ArgsAndMore#QuickfixToArgs(getqflist(), 0, 0, '<bang>')
 command! -bar -count CListToArgsAdd call ArgsAndMore#QuickfixToArgs(getqflist(), 1, <count>, '')
