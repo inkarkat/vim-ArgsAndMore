@@ -19,6 +19,15 @@
 "   2.00.020	30-Jan-2015	Expose s:Argdo() and add a:range argument for
 "				the :Argdo variant that can use the
 "				-addr=arguments attribute.
+"				ArgsAndMore#ArgdoWrapper() and s:ArgIterate()
+"				aren't needed any more.
+"				Add a:range argument for all :argdo / :bufdo /
+"				:tabdo / :windo invocations to support the new
+"				-addr attribute.
+"				Switch to
+"				ingo#regexp#fromwildcard#AnchoredToPathBoundaries()
+"				to correctly enforce path boundaries in
+"				:ArgsList {glob}.
 "   1.23.019	29-Jan-2015	Vim 7.4.605 makes the alternate file register "#
 "				writable, so we don't need to revisit the buffer.
 "				FIX: :Argdo may fail to restore the original
@@ -119,20 +128,20 @@ function! s:Execute( command )
     call s:AfterExecute()
 endfunction
 
-function! ArgsAndMore#Windo( command )
+function! ArgsAndMore#Windo( range, command )
     " By entering a window, its height is potentially increased from 0 to 1 (the
     " minimum for the current window). To avoid any modification, save the window
     " sizes and restore them after visiting all windows.
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
 	let l:previousWinNr = winnr('#') ? winnr('#') : 1
-	    windo call s:Execute(a:command)
+	    execute a:range 'windo call s:Execute(a:command)'
 	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
 
-function! ArgsAndMore#Winbufdo( command )
+function! ArgsAndMore#Winbufdo( range, command )
     let l:buffers = []
 
     " By entering a window, its height is potentially increased from 0 to 1 (the
@@ -142,26 +151,26 @@ function! ArgsAndMore#Winbufdo( command )
 	let l:originalWinNr = winnr()
 	let l:previousWinNr = winnr('#') ? winnr('#') : 1
 
-	    windo
-	    \   if index(l:buffers, bufnr('')) == -1 |
-	    \       call add(l:buffers, bufnr('')) |
-	    \       call s:Execute(a:command)
-	    \   endif
+	    execute a:range 'windo'
+	    \   'if index(l:buffers, bufnr('')) == -1 |'
+	    \       'call add(l:buffers, bufnr('')) |'
+	    \       'call s:Execute(a:command)'
+	    \   'endif'
 
 	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
 
-function! ArgsAndMore#Tabdo( command )
+function! ArgsAndMore#Tabdo( range, command )
     let l:originalTabNr = tabpagenr()
-	tabdo call s:Execute(a:command)
+	execute a:range 'tabdo call s:Execute(a:command)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 
-function! ArgsAndMore#Tabwindo( command )
+function! ArgsAndMore#Tabwindo( range, command )
     let l:originalTabNr = tabpagenr()
-	tabdo call ArgsAndMore#Windo(a:command)
+	execute a:range 'tabdo call ArgsAndMore#Windo("", a:command)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 
@@ -337,6 +346,7 @@ function! ArgsAndMore#Argdo( range, command, postCommand )
     " error message.
     let &more = l:save_more
 endfunction
+if v:version < 704 || v:version == 704 && ! has('patch530')
 function! s:ArgIterate( startArg, endArg, command, postCommand )
     " Structure here like in ArgsAndMore#Argdo().
 
@@ -438,6 +448,7 @@ function! ArgsAndMore#ArgdoWrapper( isNoRangeGiven, command, postCommand )
 	endtry
     endif
 endfunction
+endif
 
 function! ArgsAndMore#ArgdoErrors()
     let l:argidxByError = {}
@@ -481,7 +492,7 @@ function! ArgsAndMore#ArgdoDeleteSuccessful()
     echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
 endfunction
 
-function! ArgsAndMore#Bufdo( command, postCommand )
+function! ArgsAndMore#Bufdo( range, command, postCommand )
     " Structure here like in ArgsAndMore#Argdo().
 
     let l:restoreCommand = s:BufferListRestoreCommand()
@@ -496,7 +507,7 @@ function! ArgsAndMore#Bufdo( command, postCommand )
     " the command modified, but didn't update the buffer).
     try
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	bufdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)
+	execute a:range 'bufdo call s:ArgExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -576,7 +587,7 @@ endfunction
 function! s:List( files, currentIdx, isBang, fileglob )
     let l:isFullPath = (! empty(a:fileglob) || a:isBang)
     if ! empty(a:fileglob)
-	let l:pattern = ingo#regexp#fromwildcard#Convert(a:fileglob)
+	let l:pattern = ingo#regexp#fromwildcard#AnchoredToPathBoundaries(a:fileglob)
     endif
 
     let l:hasPrintedTitle = 0
@@ -599,14 +610,22 @@ function! s:List( files, currentIdx, isBang, fileglob )
 	echo (l:fileIdx == a:currentIdx ? '*' : ' ') . printf('%3d', l:fileIdx + 1) . "\t" . l:filespec
     endfor
 endfunction
-function! ArgsAndMore#ArgsList( isBang, fileglob )
-    call s:List(argv(), argidx(), a:isBang, a:fileglob)
+function! ArgsAndMore#ArgsList( startArg, endArg, isBang, fileglob )
+    call s:List(
+    \   argv()[a:startArg - 1 : a:endArg - 1],
+    \   argidx() - a:startArg + 1,
+    \   a:isBang,
+    \   a:fileglob
+    \)
 endfunction
 
 
-function! ArgsAndMore#ArgsToQuickfix()
+function! ArgsAndMore#ArgsToQuickfix( startArg, endArg )
     silent doautocmd QuickFixCmdPre args | " Allow hooking into the quickfix update.
-	call setqflist(map(argv(), "{'filename': v:val, 'lnum': 1}"))
+	call setqflist(map(
+	\   argv()[a:startArg - 1 : a:endArg - 1],
+	\   "{'filename': v:val, 'lnum': 1}"
+	\))
     silent doautocmd QuickFixCmdPost args | " Allow hooking into the quickfix update.
 endfunction
 
