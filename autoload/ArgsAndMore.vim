@@ -392,6 +392,8 @@ function! s:ArgIterate( startArg, endArg, command, postCommand )
 	" argument list.
 	let l:isAborted = 1
     finally
+	redir END
+
 	if exists('l:undoSuppressSyntax')
 	    set eventignore-=Syntax
 	endif
@@ -763,6 +765,7 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
     set nomore
 
     let s:errors = []
+    let l:seenBufNrs = {}
     let l:isAborted = 0
 
     let l:hasRange = (! empty(a:startBufNr) && ! empty(a:endBufNr))
@@ -781,9 +784,14 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
 		silent execute 'keepalt' l:iterationCommand
 	    redir END
 
-	    if l:hasRange && (bufnr('') < a:startBufNr || bufnr('') > a:endBufNr)
+	    if l:hasRange && (bufnr('') < a:startBufNr || bufnr('') > a:endBufNr) ||
+	    \   a:isFiles && has_key(l:seenBufNrs, bufnr(''))
 		" Entry outside of range; skip to next file (before echoing, so
 		" that the iteration to that location is suppressed).
+		" Or we're iterating over files and that particular buffer
+		" already appeared earlier in the list. (Though the list is
+		" usually sorted, it is not necessarily (e.g. one can use
+		" :caddexpr to add entries out-of-band).)
 		let l:iterationCommand = l:nextFileIteration
 		continue
 	    endif
@@ -794,6 +802,8 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
 	    endif
 
 	    call s:ArgOrBufExecute(a:command, a:postCommand, 0)
+
+	    let l:seenBufNrs[bufnr('')] = 1
 
 	    let l:iterationCommand = l:nextIteration
 	endwhile
