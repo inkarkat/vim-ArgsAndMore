@@ -180,7 +180,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-2.00	RELEASEME
+2.00	09-Feb-2015
 - Use ingo#msg#WarningMsg().
 - ENH: Keep previous (last accessed) window on :Windo. Thanks to Daniel Hahler
   for the patch.
