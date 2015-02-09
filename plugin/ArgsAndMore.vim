@@ -131,4 +131,16 @@ command! -bar -count CListToArgsAdd call ArgsAndMore#QuickfixToArgs(getqflist(),
 command! -bar -bang  LListToArgs    call ArgsAndMore#QuickfixToArgs(getloclist(0), 0, 0, '<bang>')
 command! -bar -count LListToArgsAdd call ArgsAndMore#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
+if v:version == 704 && has('patch530') || v:version > 704
+command! -addr=buffers -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -nargs=1 -complete=command LDoEntry    call ArgsAndMore#QuickfixDo(1, 0, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -nargs=1 -complete=command CDoFile     call ArgsAndMore#QuickfixDo(0, 1, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -nargs=1 -complete=command LDoFile     call ArgsAndMore#QuickfixDo(1, 1, <line1>, <line2>, <q-args>, '')
+else
+command!               -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, 0, 0, <q-args>, '')
+command!               -nargs=1 -complete=command LDoEntry    call ArgsAndMore#QuickfixDo(1, 0, 0, 0, <q-args>, '')
+command!               -nargs=1 -complete=command CDoFile     call ArgsAndMore#QuickfixDo(0, 1, 0, 0, <q-args>, '')
+command!               -nargs=1 -complete=command LDoFile     call ArgsAndMore#QuickfixDo(1, 1, 0, 0, <q-args>, '')
+endif
+
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
