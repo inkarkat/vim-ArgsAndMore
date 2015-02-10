@@ -23,6 +23,9 @@ processed arguments have been removed.
 
 SEE ALSO								     *
 
+- QuickFixGrep (vimscript #0000) provides :CFilter / :LFilter {expr} commands
+  similar to this plugin's :ArgsFilter command.
+
 RELATED WORKS								     *
 
 - The :ArgsNegated command was inspired by the following Stack Overflow
@@ -130,6 +133,14 @@ USAGE							   *ArgsAndMore-usage*
 :LList[!] {glob}	/ location list that matches (with [!]: does not
 			match) {glob} in a neat list. Matching and printing is
 			done to the full filespec.
+						       *:CDoEntry* *:LDoEntry*
+:[range]CDoEntry {cmd}	Execute {cmd} on each location in the quickfix /
+:[range]LDoEntry {cmd}	location list (limited to buffers in [range]).
+							 *:CDoFile* *:LDoFile*
+:[range]CDoFile {cmd}	Execute {cmd} once on each file that appears in the
+:[range]LDoFile {cmd}	quickfix / location list (limited to buffers in
+			[range]).
+
 
 ==============================================================================
 INSTALLATION					    *ArgsAndMore-installation*
@@ -179,6 +190,12 @@ IDEAS							   *ArgsAndMore-ideas*
 
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
+
+2.10	RELEASEME
+- FIX: :Bufdo..., :Win..., :Tab... in recent Vim 7.4 defaults to wrong range.
+  Forgot -range=% argument.
+- Add :CDoFile, :CDoEntry commands for iteration over quickfix / location
+  list.
 
 2.00	09-Feb-2015
 - Use ingo#msg#WarningMsg().
