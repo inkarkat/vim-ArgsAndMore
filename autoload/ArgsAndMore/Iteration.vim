@@ -431,6 +431,12 @@ function! s:GetCurrentQuickfixCnt( isLocationList )
 	return -1
     endtry
 endfunction
+function! s:GetCurrentQuickfixIdx( isLocationList )
+    return (s:isContiguousIteration && s:idx >= 0 ?
+    \   s:idx :
+    \   s:GetCurrentQuickfixCnt(a:isLocationList) - 1
+    \)
+endfunction
 function! s:Get( list, idx, default )
     let l:entry = get(a:list, a:idx, a:default)
     return (empty(l:entry) ? a:default : l:entry)
@@ -482,7 +488,8 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     set nomore
 
     let s:errors = []
-    let l:idx = -1
+    let s:idx = -1
+    let s:isContiguousIteration = 1
     let l:seenBufNrs = {}
     let l:isAborted = 0
 
@@ -508,7 +515,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	    redir => l:nextLocationOutput
 		silent execute 'keepalt' l:iterationCommand
 	    redir END
-	    let l:idx += 1
+	    let s:idx += 1
 
 	    if l:hasRange && (bufnr('') < a:startBufNr || bufnr('') > a:endBufNr) ||
 	    \   a:isFiles && has_key(l:seenBufNrs, bufnr(''))
@@ -519,6 +526,12 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 		" usually sorted, it is not necessarily (e.g. one can use
 		" :caddexpr to add entries out-of-band).)
 		let l:iterationCommand = l:nextFileIteration
+
+		" As we're skipping over quickfix entries, our simple s:idx
+		" counter doesn't properly track the quickfix list any more.
+		" s:GetCurrentQuickfixIdx() now needs to do more work to
+		" determine the proper index.
+		let s:isContiguousIteration = 0
 		continue
 	    endif
 
@@ -534,18 +547,18 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	    endif
 
 	    let l:changedtick = b:changedtick
-	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, l:idx)
+	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, s:GetCurrentQuickfixIdx(a:isLocationList))
 	    if l:isSuccess
 		if ! empty(a:fixCommand) && b:changedtick == l:changedtick
 		    " No change means the attempted fix failed.
-		    call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx))
+		    call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', s:GetCurrentQuickfixIdx(a:isLocationList)))
 		    call ingo#msg#ErrorMsg('Attempted fix failed')
 		endif
 	    else
 		" s:ArgOrBufExecute() has already captured the actual error;
 		" append the text from the quickfix entry now to complete the
 		" picture.
-		let l:qfText = get(s:GetQuickfixEntry(a:isLocationList, l:idx), 'text', '')
+		let l:qfText = get(s:GetQuickfixEntry(a:isLocationList, s:GetCurrentQuickfixIdx(a:isLocationList)), 'text', '')
 		if ! empty(l:qfText)
 		    let s:errors[-1][2] .= ' on: ' . l:qfText
 		endif
@@ -561,7 +574,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     catch /^Vim\%((\a\+)\)\=:E553:/ " E553: No more items
 	" This is the expected end of iteration.
     catch /^Vim\%((\a\+)\)\=:/
-	call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), l:idx))
+	call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), s:GetCurrentQuickfixIdx(a:isLocationList)))
 	call ingo#msg#VimExceptionMsg()
     catch /^ArgsAndMore: Aborted/
 	" This internal exception is thrown to stop the iteration through the
