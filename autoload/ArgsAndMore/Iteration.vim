@@ -108,35 +108,43 @@ function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
 	endtry
     endif
 endfunction
-function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax )
+function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax, ... )
     if a:isEnableSyntax
 	call s:EnableSyntaxHighlightingForInteractiveCommands(a:command)
     endif
+    let l:location = (a:0 ? a:1 : argidx())
+    let l:isSuccess = 1
 
     try
 	let v:errmsg = ''
 	execute a:command
 	if ! empty(v:errmsg)
-	    call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')]) " As this is used for both arguments and buffers, record both.
+	    call add(s:errors, [l:location, bufnr(''), v:errmsg, line('.'), col('.')]) " As this is used for both arguments and buffers, record both.
+	    let l:isSuccess = 0
 	endif
 	if ! empty(a:postCommand)
 	    let v:errmsg = ''
 	    execute a:postCommand
 	    if ! empty(v:errmsg)
-		call add(s:errors, [argidx(), bufnr(''), v:errmsg, line('.'), col('.')])
+		call add(s:errors, [l:location, bufnr(''), v:errmsg, line('.'), col('.')])
+		let l:isSuccess = 0
 	    endif
 	endif
     catch /^Vim\%((\a\+)\)\=:/
-	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException(), line('.'), col('.')])
+	call add(s:errors, [l:location, bufnr(''), ingo#msg#MsgFromVimException(), line('.'), col('.')])
 	call ingo#msg#VimExceptionMsg()
+	let l:isSuccess = 0
     catch /^ArgsAndMore: Aborted/
 	throw v:exception
     catch
-	call add(s:errors, [argidx(), bufnr(''), v:exception, line('.'), col('.')])
+	call add(s:errors, [l:location, bufnr(''), v:exception, line('.'), col('.')])
 	call ingo#msg#ErrorMsg(v:exception)
+	let l:isSuccess = 0
     endtry
 
     call ArgsAndMore#AfterExecute()
+
+    return l:isSuccess
 endfunction
 function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
@@ -183,7 +191,10 @@ function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
 	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s',
+	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
+	\   (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')
+	\))
     endif
 
     " To avoid a hit-enter prompt, we have to restore this _after_ the summary
@@ -252,7 +263,10 @@ function! s:ArgIterate( startArg, endArg, command, postCommand )
 	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s',
+	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
+	\   (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')
+	\))
     endif
 
     let &more = l:save_more
@@ -366,7 +380,10 @@ function! ArgsAndMore#Iteration#Bufdo( range, command, postCommand )
 	call ingo#msg#ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:bufferNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[1]')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in buffer%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in buffer%s %s',
+	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
+	\   (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')
+	))
     endif
 
     let &more = l:save_more
@@ -405,7 +422,12 @@ function! s:GetCurrentQuickfixCnt( isLocationList )
 	return -1
     endtry
 endfunction
-function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr, command, postCommand )
+function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
+    let l:qfEntry = get(a:isLocationList ? getloclist(0) : getqflist(), a:quickfixIdx, {})
+    let l:qfText = get(l:qfEntry, 'text', '')
+    return a:errorMessage . (empty(l:qfText) ? '' : ' on: ' . l:qfText)
+endfunction
+function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand, startBufNr, endBufNr, command, postCommand )
     let l:prefix = (a:isLocationList ? 'l' : 'c')
 
     " Structure here like in ArgsAndMore#Iteration#Argdo().
@@ -437,6 +459,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
     set nomore
 
     let s:errors = []
+    let l:idx = -1
     let l:seenBufNrs = {}
     let l:isAborted = 0
 
@@ -447,9 +470,9 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
     let l:iterationCommand = l:firstIteration
     let l:originalEntryCommand = ''
     try
-	let l:currentCnt = s:GetCurrentQuickfixCnt(a:isLocationList)
-	if l:currentCnt != -1
-	    let l:originalEntryCommand = s:JoinCommands([l:currentCnt . l:prefix . l:prefix])
+	let l:originalCnt = s:GetCurrentQuickfixCnt(a:isLocationList)
+	if l:originalCnt != -1
+	    let l:originalEntryCommand = s:JoinCommands([l:originalCnt . l:prefix . l:prefix])
 	endif
 
 	while 1
@@ -462,6 +485,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
 	    redir => l:nextLocationOutput
 		silent execute 'keepalt' l:iterationCommand
 	    redir END
+	    let l:idx += 1
 
 	    if l:hasRange && (bufnr('') < a:startBufNr || bufnr('') > a:endBufNr) ||
 	    \   a:isFiles && has_key(l:seenBufNrs, bufnr(''))
@@ -486,7 +510,12 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
 		echo v:statusmsg
 	    endif
 
-	    call s:ArgOrBufExecute(a:command, a:postCommand, 0)
+	    let l:changedtick = b:changedtick
+	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, l:idx)
+	    if l:isSuccess && ! empty(a:fixCommand) && b:changedtick == l:changedtick
+		call add(s:errors, [l:idx, bufnr(''), s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx), line('.'), col('.')])
+		call ingo#msg#ErrorMsg('Attempted fix failed')
+	    endif
 
 	    let l:seenBufNrs[bufnr('')] = 1
 
@@ -498,7 +527,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
     catch /^Vim\%((\a\+)\)\=:E553:/ " E553: No more items
 	" This is the expected end of iteration.
     catch /^Vim\%((\a\+)\)\=:/
-	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
+	call add(s:errors, [l:idx, bufnr(''), s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), l:idx), line('.'), col('.')])
 	call ingo#msg#VimExceptionMsg()
     catch /^ArgsAndMore: Aborted/
 	" This internal exception is thrown to stop the iteration through the
@@ -524,11 +553,24 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
 	silent! execute l:restoreCommand
     endif
 
+    if ! empty(a:fixCommand)
+	call s:ErrorsToQuickfix(a:fixCommand)
+    endif
+
     if len(s:errors) == 1
-	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#msg#ErrorMsg(printf('entry %d, buffer %d %s: %s',
+	\   (s:errors[0][0] == -1 ? '?' : s:errors[0][0] + 1),
+	\   s:errors[0][1],
+	\   bufname(s:errors[0][1]), s:errors[0][2]
+	\))
     elseif len(s:errors) > 1
-	let l:locationNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in location%s %s', len(s:errors), (len(s:errors) == 1 ? '' : 's'), (len(l:locationNumbers) == 1 ? '' : 's'), join(l:locationNumbers, ', ')))
+	let l:entryNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] == -1 ? "?" : v:val[0] + 1')))
+	let l:bufferNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[1]')))
+	call ingo#msg#ErrorMsg(printf('%d error%s in entr%s %s; buffer%s %s',
+	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
+	\   (len(l:entryNumbers) == 1 ? 'y' : 'ies'), join(l:entryNumbers, ', '),
+	\   (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')
+	\))
     endif
 
     let &more = l:save_more
