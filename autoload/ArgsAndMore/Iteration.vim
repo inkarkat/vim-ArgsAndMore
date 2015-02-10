@@ -13,6 +13,8 @@
 "
 " REVISION	DATE		REMARKS
 "	001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
+let s:save_cpo = &cpo
+set cpo&vim
 
 function! s:sort( list )
     return sort(a:list, 'ingo#collections#numsort')
@@ -532,4 +534,6 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, startBufNr,
     let &more = l:save_more
 endfunction
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
