@@ -422,10 +422,21 @@ function! s:GetCurrentQuickfixCnt( isLocationList )
 	return -1
     endtry
 endfunction
+function! s:Get( list, idx, default )
+    let l:entry = get(a:list, a:idx, a:default)
+    return (empty(l:entry) ? a:default : l:entry)
+endfunction
 function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
     let l:qfEntry = get(a:isLocationList ? getloclist(0) : getqflist(), a:quickfixIdx, {})
     let l:qfText = get(l:qfEntry, 'text', '')
-    return a:errorMessage . (empty(l:qfText) ? '' : ' on: ' . l:qfText)
+    let l:qfCol = (empty(l:qfEntry) ? 0 : ingo#window#quickfix#TranslateVirtualColToByteCount(l:qfEntry))
+    return [
+    \   a:quickfixIdx,
+    \   s:Get(l:qfEntry, 'bufnr', bufnr('')),
+    \   a:errorMessage . (empty(l:qfText) ? '' : ' on: ' . l:qfText),
+    \   s:Get(l:qfEntry, 'lnum', line('.')),
+    \   (empty(l:qfCol) ? col('.') : l:qfCol)
+    \]
 endfunction
 function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand, startBufNr, endBufNr, command, postCommand )
     let l:prefix = (a:isLocationList ? 'l' : 'c')
@@ -513,7 +524,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	    let l:changedtick = b:changedtick
 	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, l:idx)
 	    if l:isSuccess && ! empty(a:fixCommand) && b:changedtick == l:changedtick
-		call add(s:errors, [l:idx, bufnr(''), s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx), line('.'), col('.')])
+		call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx))
 		call ingo#msg#ErrorMsg('Attempted fix failed')
 	    endif
 
@@ -527,7 +538,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     catch /^Vim\%((\a\+)\)\=:E553:/ " E553: No more items
 	" This is the expected end of iteration.
     catch /^Vim\%((\a\+)\)\=:/
-	call add(s:errors, [l:idx, bufnr(''), s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), l:idx), line('.'), col('.')])
+	call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), l:idx))
 	call ingo#msg#VimExceptionMsg()
     catch /^ArgsAndMore: Aborted/
 	" This internal exception is thrown to stop the iteration through the
