@@ -547,7 +547,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	    endif
 
 	    let l:changedtick = b:changedtick
-	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, s:GetCurrentQuickfixIdx(a:isLocationList))
+	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, -1)
 	    if l:isSuccess
 		if ! empty(a:fixCommand) && b:changedtick == l:changedtick
 		    " No change means the attempted fix failed.
@@ -562,6 +562,10 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 		if ! empty(l:qfText)
 		    let s:errors[-1][2] .= ' on: ' . l:qfText
 		endif
+
+		" Also set the (potentially costly to resolve) quickfix entry
+		" index.
+		let s:errors[-1][0] = s:GetCurrentQuickfixIdx(a:isLocationList)
 	    endif
 
 	    let l:seenBufNrs[bufnr('')] = 1
