@@ -10,6 +10,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.10.013	10-Feb-2015	FIX: :Bufdo..., :Win..., :Tab... in recent Vim
+"				7.4 defaults to wrong range. Forgot -range=%
+"				argument.
+"				Add :CDoFile, :CDoEntry commands for iteration
+"				over quickfix / location list.
 "   2.00.012	30-Jan-2015	Support the -addr=arguments attribute in Vim
 "				7.4.530 or later for :Argdo... commands. With
 "				that, relative addressing can also be used
@@ -72,19 +77,19 @@ endif
 " commands.
 
 if v:version == 704 && has('patch530') || v:version > 704
-command! -addr=buffers -nargs=1 -complete=command Bufdo       call ArgsAndMore#Bufdo('<line1>,<line2>', <q-args>, '')
-command! -addr=buffers -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Bufdo('<line1>,<line2>', <q-args>, 'update')
-command! -addr=windows -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('<line1>,<line2>', <q-args>)
-command! -addr=windows -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo('<line1>,<line2>', <q-args>)
-command! -addr=tabs    -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo('<line1>,<line2>', <q-args>)
-command! -addr=tabs    -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo('<line1>,<line2>', <q-args>)
+command! -addr=buffers -range=% -nargs=1 -complete=command Bufdo       call ArgsAndMore#Bufdo('<line1>,<line2>', <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Bufdo('<line1>,<line2>', <q-args>, 'update')
+command! -addr=windows -range=% -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('<line1>,<line2>', <q-args>)
+command! -addr=windows -range=% -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo('<line1>,<line2>', <q-args>)
+command! -addr=tabs    -range=% -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo('<line1>,<line2>', <q-args>)
+command! -addr=tabs    -range=% -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo('<line1>,<line2>', <q-args>)
 else
-command!               -nargs=1 -complete=command Bufdo       call ArgsAndMore#Bufdo('', <q-args>, '')
-command!               -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Bufdo('', <q-args>, 'update')
-command!               -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('', <q-args>)
-command!               -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo('', <q-args>)
-command!               -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo('', <q-args>)
-command!               -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo('', <q-args>)
+command!                        -nargs=1 -complete=command Bufdo       call ArgsAndMore#Bufdo('', <q-args>, '')
+command!                        -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Bufdo('', <q-args>, 'update')
+command!                        -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('', <q-args>)
+command!                        -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo('', <q-args>)
+command!                        -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo('', <q-args>)
+command!                        -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo('', <q-args>)
 endif
 
 
@@ -132,15 +137,15 @@ command! -bar -bang  LListToArgs    call ArgsAndMore#QuickfixToArgs(getloclist(0
 command! -bar -count LListToArgsAdd call ArgsAndMore#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
 if v:version == 704 && has('patch530') || v:version > 704
-command! -addr=buffers -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -nargs=1 -complete=command LDoEntry    call ArgsAndMore#QuickfixDo(1, 0, <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -nargs=1 -complete=command CDoFile     call ArgsAndMore#QuickfixDo(0, 1, <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -nargs=1 -complete=command LDoFile     call ArgsAndMore#QuickfixDo(1, 1, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoEntry    call ArgsAndMore#QuickfixDo(1, 0, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoFile     call ArgsAndMore#QuickfixDo(0, 1, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoFile     call ArgsAndMore#QuickfixDo(1, 1, <line1>, <line2>, <q-args>, '')
 else
-command!               -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, 0, 0, <q-args>, '')
-command!               -nargs=1 -complete=command LDoEntry    call ArgsAndMore#QuickfixDo(1, 0, 0, 0, <q-args>, '')
-command!               -nargs=1 -complete=command CDoFile     call ArgsAndMore#QuickfixDo(0, 1, 0, 0, <q-args>, '')
-command!               -nargs=1 -complete=command LDoFile     call ArgsAndMore#QuickfixDo(1, 1, 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command LDoEntry    call ArgsAndMore#QuickfixDo(1, 0, 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command CDoFile     call ArgsAndMore#QuickfixDo(0, 1, 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command LDoFile     call ArgsAndMore#QuickfixDo(1, 1, 0, 0, <q-args>, '')
 endif
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
