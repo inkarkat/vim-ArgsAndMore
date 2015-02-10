@@ -16,6 +16,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.10.021	10-Feb-2015	Rename s:ArgExecute() to s:ArgOrBufExecute() to
+"				better convey its dual use.
+"				Implement :CDo... commands via
+"				ArgsAndMore#QuickfixDo().
 "   2.00.020	30-Jan-2015	Expose s:Argdo() and add a:range argument for
 "				the :Argdo variant that can use the
 "				-addr=arguments attribute.
@@ -817,6 +821,7 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
 	    " avoid this and keep both file changes as well as error messages
 	    " interspersed on the screen, capture the output from the file
 	    " change and :echo it ourselves.
+	    let v:statusmsg = ''
 	    redir => l:nextLocationOutput
 		silent execute 'keepalt' l:iterationCommand
 	    redir END
@@ -836,6 +841,12 @@ function! ArgsAndMore#QuickfixDo( isLocationList, isFiles, startBufNr, endBufNr,
 	    let l:nextLocationOutput = substitute(l:nextLocationOutput, '^\_s*', '', '')
 	    if ! empty(l:nextLocationOutput)
 		echo l:nextLocationOutput
+	    elseif ! empty(v:statusmsg)
+		" XXX: :redir only captures the :cfirst message, not the
+		" subsequent :cnfile ones, also not :cnext when it switches to
+		" another file. But we have that one in v:statusmsg, so fall
+		" back to that.
+		echo v:statusmsg
 	    endif
 
 	    call s:ArgOrBufExecute(a:command, a:postCommand, 0)
