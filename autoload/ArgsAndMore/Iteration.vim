@@ -12,6 +12,15 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	002	11-Feb-2015	ENH: Implement :CDoFixEntry command via
+"				additional a:fixCommand argument on
+"				ArgsAndMore#Iteration#QuickfixDo().
+"				Correct error reporting of :CDo... commands to
+"				list entries (renamed from "locations") without
+"				off-by-one, and additionally the buffer(s).
+"				Extend s:ArgOrBufExecute() to pass in quickfix
+"				entry index, to capture this also when the
+"				individual a:command fails.
 "	001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
@@ -426,8 +435,11 @@ function! s:Get( list, idx, default )
     let l:entry = get(a:list, a:idx, a:default)
     return (empty(l:entry) ? a:default : l:entry)
 endfunction
+function! s:GetQuickfixEntry( isLocationList, quickfixIdx )
+    return get(a:isLocationList ? getloclist(0) : getqflist(), a:quickfixIdx, {})
+endfunction
 function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
-    let l:qfEntry = get(a:isLocationList ? getloclist(0) : getqflist(), a:quickfixIdx, {})
+    let l:qfEntry = s:GetQuickfixEntry(a:isLocationList, a:quickfixIdx)
     let l:qfText = get(l:qfEntry, 'text', '')
     let l:qfCol = (empty(l:qfEntry) ? 0 : ingo#window#quickfix#TranslateVirtualColToByteCount(l:qfEntry))
     return [
@@ -523,9 +535,20 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 
 	    let l:changedtick = b:changedtick
 	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, l:idx)
-	    if l:isSuccess && ! empty(a:fixCommand) && b:changedtick == l:changedtick
-		call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx))
-		call ingo#msg#ErrorMsg('Attempted fix failed')
+	    if l:isSuccess
+		if ! empty(a:fixCommand) && b:changedtick == l:changedtick
+		    " No change means the attempted fix failed.
+		    call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx))
+		    call ingo#msg#ErrorMsg('Attempted fix failed')
+		endif
+	    else
+		" s:ArgOrBufExecute() has already captured the actual error;
+		" append the text from the quickfix entry now to complete the
+		" picture.
+		let l:qfText = get(s:GetQuickfixEntry(a:isLocationList, l:idx), 'text', '')
+		if ! empty(l:qfText)
+		    let s:errors[-1][2] .= ' on: ' . l:qfText
+		endif
 	    endif
 
 	    let l:seenBufNrs[bufnr('')] = 1
