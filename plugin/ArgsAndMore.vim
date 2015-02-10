@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - Requires Vim 7.0 or higher.
 "   - ArgsAndMore.vim autoload script
+"   - ArgsAndMore/Args.vim autoload script
 "
 " Copyright: (C) 2012-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -10,6 +11,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.10.014	11-Feb-2015	Factor out ArgsAndMore/Args.vim module.
 "   2.10.013	10-Feb-2015	FIX: :Bufdo..., :Win..., :Tab... in recent Vim
 "				7.4 defaults to wrong range. Forgot -range=%
 "				argument.
@@ -115,26 +117,26 @@ command! -bar ArgdoErrors call ArgsAndMore#ArgdoErrors()
 command! -bar ArgdoDeleteSuccessful call ArgsAndMore#ArgdoDeleteSuccessful()
 
 
-command! -nargs=1 -complete=expression ArgsFilter call ArgsAndMore#ArgsFilter(<q-args>)
+command! -nargs=1 -complete=expression ArgsFilter call ArgsAndMore#Args#Filter(<q-args>)
 
-command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#ArgsNegated('<bang>', <q-args>)
+command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#Args#Negated('<bang>', <q-args>)
 
 " Note: Must use * instead of ?; otherwise (due to -complete=file), Vim
 " complains about globs with "E77: Too many file names".
-command! -bar -bang -nargs=* -complete=file CList call ArgsAndMore#QuickfixList(getqflist(), <bang>0, <q-args>)
-command! -bar -bang -nargs=* -complete=file LList call ArgsAndMore#QuickfixList(getloclist(0), <bang>0, <q-args>)
+command! -bar -bang -nargs=* -complete=file CList call ArgsAndMore#Args#QuickfixList(getqflist(), <bang>0, <q-args>)
+command! -bar -bang -nargs=* -complete=file LList call ArgsAndMore#Args#QuickfixList(getloclist(0), <bang>0, <q-args>)
 if v:version == 704 && has('patch530') || v:version > 704
-command! -bar -bang -addr=arguments -range=% -nargs=* -complete=file ArgsList       call ArgsAndMore#ArgsList(<line1>, <line2>, <bang>0, <q-args>)
-command! -bar       -addr=arguments -range=%                         ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix(<line1>, <line2>)
+command! -bar -bang -addr=arguments -range=% -nargs=* -complete=file ArgsList       call ArgsAndMore#Args#List(<line1>, <line2>, <bang>0, <q-args>)
+command! -bar       -addr=arguments -range=%                         ArgsToQuickfix call ArgsAndMore#Args#ToQuickfix(<line1>, <line2>)
 else
-command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#ArgsList(1, argc(), <bang>0, <q-args>)
-command! -bar ArgsToQuickfix call ArgsAndMore#ArgsToQuickfix(1, argc())
+command! -bar -bang -nargs=* -complete=file ArgsList call ArgsAndMore#Args#List(1, argc(), <bang>0, <q-args>)
+command! -bar ArgsToQuickfix call ArgsAndMore#Args#ToQuickfix(1, argc())
 endif
 
-command! -bar -bang  CListToArgs    call ArgsAndMore#QuickfixToArgs(getqflist(), 0, 0, '<bang>')
-command! -bar -count CListToArgsAdd call ArgsAndMore#QuickfixToArgs(getqflist(), 1, <count>, '')
-command! -bar -bang  LListToArgs    call ArgsAndMore#QuickfixToArgs(getloclist(0), 0, 0, '<bang>')
-command! -bar -count LListToArgsAdd call ArgsAndMore#QuickfixToArgs(getloclist(0), 1, <count>, '')
+command! -bar -bang  CListToArgs    call ArgsAndMore#Args#QuickfixToArgs(getqflist(), 0, 0, '<bang>')
+command! -bar -count CListToArgsAdd call ArgsAndMore#Args#QuickfixToArgs(getqflist(), 1, <count>, '')
+command! -bar -bang  LListToArgs    call ArgsAndMore#Args#QuickfixToArgs(getloclist(0), 0, 0, '<bang>')
+command! -bar -count LListToArgsAdd call ArgsAndMore#Args#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
 if v:version == 704 && has('patch530') || v:version > 704
 command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    call ArgsAndMore#QuickfixDo(0, 0, <line1>, <line2>, <q-args>, '')
