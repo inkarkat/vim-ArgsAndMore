@@ -432,10 +432,11 @@ function! s:GetCurrentQuickfixCnt( isLocationList )
     endtry
 endfunction
 function! s:GetCurrentQuickfixIdx( isLocationList )
-    return (s:isContiguousIteration && s:idx >= 0 ?
-    \   s:idx :
-    \   s:GetCurrentQuickfixCnt(a:isLocationList) - 1
-    \)
+    if ! s:isContiguousIteration || s:idx < 0
+	let s:idx = s:GetCurrentQuickfixCnt(a:isLocationList) - 1
+	let s:isContiguousIteration = (s:idx >= 0) " We're good again.
+    endif
+    return s:idx
 endfunction
 function! s:Get( list, idx, default )
     let l:entry = get(a:list, a:idx, a:default)
