@@ -82,14 +82,17 @@ function! s:ErrorToQuickfixEntry( error )
     endif
     return l:entry
 endfunction
-function! s:ErrorsToQuickfix( command )
-    if len(s:errors) == 0
+function! s:SetQuickfix( command, entries )
+    if len(a:entries) == 0
 	return
     endif
 
     silent execute 'doautocmd QuickFixCmdPre' a:command | " Allow hooking into the quickfix update.
-	call setqflist(map(copy(s:errors), "s:ErrorToQuickfixEntry(v:val)"))
+	call setqflist(a:entries)
     silent execute 'doautocmd QuickFixCmdPost' a:command | " Allow hooking into the quickfix update.
+endfunction
+function! s:ErrorsToQuickfix( command )
+    call s:SetQuickfix(a:command, map(copy(s:errors), 's:ErrorToQuickfixEntry(v:val)'))
 endfunction
 function! s:IsInteractiveCommand( command )
     return (! empty(g:ArgsAndMore_InteractiveCommandPattern) && a:command =~# g:ArgsAndMore_InteractiveCommandPattern)
@@ -441,19 +444,24 @@ endfunction
 function! s:GetQuickfixEntry( isLocationList, quickfixIdx )
     return get(s:GetQuickfixList(a:isLocationList), a:quickfixIdx, {})
 endfunction
-function! s:DetermineSkippedEntries( isLocationList, quickfixIdx )
+function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrorsCnt )
     let l:bufNr = bufnr('')
     let l:idx = a:quickfixIdx
     let l:list = s:GetQuickfixList(a:isLocationList)
     if l:list[l:idx].bufnr != l:bufNr
 	call ingo#msg#WarningMsg(printf('Cannot associate buffer %d with entry %d; some entries may get lost.', l:bufNr, a:quickfixIdx))
-	return a:quickfixIdx
+	return [a:quickfixIdx, 0, []]
     endif
 
+    " Progress until the last entry belonging to the current (skipped) buffer.
     while l:idx + 1 < len(l:list) && l:list[l:idx + 1].bufnr == l:bufNr
 	let l:idx += 1
     endwhile
-    return l:idx
+
+    let l:consumedErrors = s:errors[ a:consumedErrorsCnt : ]
+    let l:consumedErrorsCnt = len(s:errors)
+
+    return [l:idx, l:consumedErrorsCnt, map(l:consumedErrors, 's:ErrorToQuickfixEntry(v:val)') + l:list[ a:quickfixIdx : l:idx ]]
 endfunction
 function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
     let l:qfEntry = s:GetQuickfixEntry(a:isLocationList, a:quickfixIdx)
@@ -499,9 +507,11 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     set nomore
 
     let s:errors = []
+    let l:entries = []
     let l:idx = -1
     let l:seenBufNrs = {}
     let l:isAborted = 0
+    let l:consumedErrorsCnt = 0
 
     let l:hasRange = (! empty(a:startBufNr) && ! empty(a:endBufNr))
     let l:firstIteration = l:prefix . 'first'
@@ -541,7 +551,8 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 		" counter doesn't properly track the quickfix list any more.
 		" Find out how many entries have been skipped (and store those
 		" for a fix command).
-		let l:idx = s:DetermineSkippedEntries(a:isLocationList, l:idx)
+		let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(a:isLocationList, l:idx, l:consumedErrorsCnt)
+		let l:entries += l:newEntries
 		continue
 	    endif
 
@@ -611,7 +622,9 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     endif
 
     if ! empty(a:fixCommand)
-	call s:ErrorsToQuickfix(a:fixCommand)
+	let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(a:isLocationList, l:idx, l:consumedErrorsCnt)
+	let l:entries += l:newEntries
+	call s:SetQuickfix(a:fixCommand, l:entries)
     endif
 
     if len(s:errors) == 1
