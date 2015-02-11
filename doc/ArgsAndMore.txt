@@ -134,12 +134,22 @@ USAGE							   *ArgsAndMore-usage*
 			match) {glob} in a neat list. Matching and printing is
 			done to the full filespec.
 						       *:CDoEntry* *:LDoEntry*
-:[range]CDoEntry {cmd}	Execute {cmd} on each location in the quickfix /
+:[range]CDoEntry {cmd}	Execute {cmd} on each entry in the quickfix /
 :[range]LDoEntry {cmd}	location list (limited to buffers in [range]).
 							 *:CDoFile* *:LDoFile*
 :[range]CDoFile {cmd}	Execute {cmd} once on each file that appears in the
 :[range]LDoFile {cmd}	quickfix / location list (limited to buffers in
 			[range]).
+						 *:CDoFixEntry* *:LDoFixEntry*
+:[range]CDoFixEntry {cmd}
+:[range]LDoFixEntry {cmd}
+			Execute {cmd} on each entry in the quickfix / location
+			list (limited to buffers in [range]). If the {cmd}
+			does not abort and changes the buffer (i.e. increases
+			|b:changedtick|), that entry is removed from the
+			quickfix / location list. Else, the original entry is
+			augmented with error information. (Entries for buffers
+			outside [range] are lost.)
 
 
 ==============================================================================
@@ -194,8 +204,8 @@ HISTORY							 *ArgsAndMore-history*
 2.10	RELEASEME
 - FIX: :Bufdo..., :Win..., :Tab... in recent Vim 7.4 defaults to wrong range.
   Forgot -range=% argument.
-- Add :CDoFile, :CDoEntry commands for iteration over quickfix / location
-  list.
+- Add :CDoFile, :CDoEntry, :CDoFixEntry commands for iteration over quickfix /
+  location list.
 
 2.00	09-Feb-2015
 - Use ingo#msg#WarningMsg().
