@@ -149,7 +149,7 @@ USAGE							   *ArgsAndMore-usage*
 			|b:changedtick|), that entry is removed from the
 			quickfix / location list. Else, the original entry is
 			augmented with error information. (Entries for buffers
-			outside [range] are lost.)
+			outside [range] are kept as-is.)
 
 
 ==============================================================================
