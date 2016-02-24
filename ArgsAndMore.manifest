@@ -1,3 +1,5 @@
 autoload/ArgsAndMore.vim
+autoload/ArgsAndMore/Args.vim
+autoload/ArgsAndMore/Iteration.vim
 plugin/ArgsAndMore.vim
 doc/ArgsAndMore.txt
