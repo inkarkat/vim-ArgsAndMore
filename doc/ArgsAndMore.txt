@@ -201,7 +201,7 @@ IDEAS							   *ArgsAndMore-ideas*
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
 
-2.10	RELEASEME
+2.10	08-Mar-2015
 - FIX: :Bufdo..., :Win..., :Tab... in recent Vim 7.4 defaults to wrong range.
   Forgot -range=% argument.
 - Add :CDoFile, :CDoEntry, :CDoFixEntry commands for iteration over quickfix /
