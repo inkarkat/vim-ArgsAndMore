@@ -12,7 +12,25 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	002	11-Feb-2015	ENH: Implement :CDoFixEntry command via
+"   2.10.003	12-Feb-2015	Factor out s:SetQuickfix() from
+"				s:ErrorsToQuickfix().
+"				Replace s:GetCurrentQuickfixIdx() with different
+"				algorithm that counts the quickfix entries for a
+"				skipped buffer (by using the current index to
+"				go forward through the quickfix list until
+"				another buffer is encountered), avoiding the
+"				costly re-determining of the current index.
+"				Clone quickfix entries of skipped buffers over
+"				to the fix command quickfix list.
+"				s:DetermineSkippedEntries() already knows the
+"				skipped indices and just needs to return the
+"				entries for ArgsAndMore#Iteration#Quickfix() to
+"				accumulate. To keep the errors of non-skipped
+"				entries in the right position, these need to be
+"				interspersed; s:ConsumeErrors() does this during
+"				skipping, and once more after iteration for the
+"				remaining ones.
+"   2.10.002	11-Feb-2015	ENH: Implement :CDoFixEntry command via
 "				additional a:fixCommand argument on
 "				ArgsAndMore#Iteration#QuickfixDo().
 "				Correct error reporting of :CDo... commands to
@@ -21,7 +39,7 @@
 "				Extend s:ArgOrBufExecute() to pass in quickfix
 "				entry index, to capture this also when the
 "				individual a:command fails.
-"	001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
+"   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -444,6 +462,11 @@ endfunction
 function! s:GetQuickfixEntry( isLocationList, quickfixIdx )
     return get(s:GetQuickfixList(a:isLocationList), a:quickfixIdx, {})
 endfunction
+function! s:ConsumeErrors( consumedErrorsCnt )
+    let l:consumedErrors = s:errors[ a:consumedErrorsCnt : ]
+    let l:consumedErrorsCnt = len(s:errors)
+    return [l:consumedErrorsCnt, map(l:consumedErrors, 's:ErrorToQuickfixEntry(v:val)')]
+endfunction
 function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrorsCnt )
     let l:bufNr = bufnr('')
     let l:idx = a:quickfixIdx
@@ -458,10 +481,8 @@ function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrors
 	let l:idx += 1
     endwhile
 
-    let l:consumedErrors = s:errors[ a:consumedErrorsCnt : ]
-    let l:consumedErrorsCnt = len(s:errors)
-
-    return [l:idx, l:consumedErrorsCnt, map(l:consumedErrors, 's:ErrorToQuickfixEntry(v:val)') + l:list[ a:quickfixIdx : l:idx ]]
+    let [l:consumedErrorsCnt, l:consumedErrors] = s:ConsumeErrors(a:consumedErrorsCnt)
+    return [l:idx, l:consumedErrorsCnt, l:consumedErrors + l:list[ a:quickfixIdx : l:idx ]]
 endfunction
 function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
     let l:qfEntry = s:GetQuickfixEntry(a:isLocationList, a:quickfixIdx)
@@ -622,8 +643,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     endif
 
     if ! empty(a:fixCommand)
-	let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(a:isLocationList, l:idx, l:consumedErrorsCnt)
-	let l:entries += l:newEntries
+	let l:entries += s:ConsumeErrors(l:consumedErrorsCnt)[1]
 	call s:SetQuickfix(a:fixCommand, l:entries)
     endif
 
