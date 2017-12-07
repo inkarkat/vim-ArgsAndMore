@@ -23,8 +23,8 @@ processed arguments have been removed.
 
 SEE ALSO								     *
 
-- QuickFixGrep (vimscript #0000) provides :CFilter / :LFilter {expr} commands
-  similar to this plugin's :ArgsFilter command.
+- QuickFixGrep.vim (vimscript #0000) provides :CFilter / :LFilter {expr}
+  commands similar to this plugin's :ArgsFilter command.
 
 RELATED WORKS								     *
 
@@ -285,7 +285,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2015 Ingo Karkat
+Copyright: (C) 2012-2017 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
