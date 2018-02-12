@@ -15,6 +15,7 @@
 " REVISION	DATE		REMARKS
 "   2.11.016	13-Feb-2018	ENH: Support [range] for :ArgsFilter (without
 "                               workaround for older Vim versions, though).
+"                               ENH: Add :ArgsFilterDo variant.
 "   2.11.015	13-Feb-2018	Refactoring: Define s:hasArgumentAddressing to
 "                               avoid repetition of the conditional.
 "   2.10.014	11-Feb-2015	Factor out ArgsAndMore/Args.vim and
@@ -128,9 +129,11 @@ command! -bar ArgdoDeleteSuccessful call ArgsAndMore#Iteration#ArgdoDeleteSucces
 
 
 if s:hasArgumentAddressing
-command! -addr=arguments -range=% -nargs=1 -complete=expression ArgsFilter if ! ArgsAndMore#Args#Filter(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command! -addr=arguments -range=% -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command! -addr=arguments -range=% -nargs=1 -complete=expression ArgsFilterDo if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterIterate', <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 else
-command!                          -nargs=1 -complete=expression ArgsFilter if ! ArgsAndMore#Args#Filter(1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
+command!                          -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
+command!                          -nargs=1 -complete=expression ArgsFilterDo if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterIterate', 1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
 endif
 
 command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#Args#Negated('<bang>', <q-args>)
