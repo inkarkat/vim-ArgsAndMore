@@ -4,6 +4,7 @@
 "   - Requires Vim 7.0 or higher.
 "   - ArgsAndMore.vim autoload script
 "   - ArgsAndMore/Args.vim autoload script
+"   - ArgsAndMore/Iteration.vim autoload script
 "
 " Copyright: (C) 2012-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -12,7 +13,7 @@
 "
 " REVISION	DATE		REMARKS
 "   2.10.014	11-Feb-2015	Factor out ArgsAndMore/Args.vim and
-"				ArgsAndMore/Iteration modules.
+"				ArgsAndMore/Iteration.vim modules.
 "   2.10.013	10-Feb-2015	FIX: :Bufdo..., :Win..., :Tab... in recent Vim
 "				7.4 defaults to wrong range. Forgot -range=%
 "				argument.
@@ -63,6 +64,8 @@ if exists('g:loaded_ArgsAndMore') || (v:version < 700)
     finish
 endif
 let g:loaded_ArgsAndMore = 1
+let s:save_cpo = &cpo
+set cpo&vim
 
 "- configuration ---------------------------------------------------------------
 
@@ -140,15 +143,21 @@ command! -bar -bang  LListToArgs    call ArgsAndMore#Args#QuickfixToArgs(getlocl
 command! -bar -count LListToArgsAdd call ArgsAndMore#Args#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
 if v:version == 704 && has('patch530') || v:version > 704
-command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command LDoFile     call ArgsAndMore#Iteration#QuickfixDo(1, 1, <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, '', <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, '', <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, '', <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoFile     call ArgsAndMore#Iteration#QuickfixDo(1, 1, '', <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(0, 0, 'CDoFixEntry', <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', <line1>, <line2>, <q-args>, '')
 else
-command!                        -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command LDoFile     call ArgsAndMore#Iteration#QuickfixDo(1, 1, 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, '', 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, '', 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, '', 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command LDoFile     call ArgsAndMore#Iteration#QuickfixDo(1, 1, '', 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command CDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(0, 0, 'CDoFixEntry', 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command LDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', 0, 0, <q-args>, '')
 endif
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
