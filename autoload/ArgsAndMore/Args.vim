@@ -10,40 +10,50 @@
 "   - ingo/regexp/fromwildcard.vim autoload script
 "
 "
-" Copyright: (C) 2015-2017 Ingo Karkat
+" Copyright: (C) 2015-2018 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.003	13-Feb-2018	ENH: ArgsAndMore#Args#Filter(): Add a:startArg
+"                               and a:endArg and slice argv() with them.
 "   2.11.002	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
 "   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! ArgsAndMore#Args#Filter( filterExpression )
-    let l:originalArgNum = argc()
+function! ArgsAndMore#Args#Filter( startArg, endArg, filterExpression )
+    if a:endArg == 0
+	call ingo#err#Set('No arguments')
+	return 0
+    endif
+
+    let l:arguments = argv()[(a:startArg - 1) : (a:endArg - 1)]
+    let l:originalArgNum = len(l:arguments)
     let l:deletedArgs = []
     try
-	let l:filteredArgs = map(argv(), a:filterExpression)
+	let l:filteredArgs = map(l:arguments, a:filterExpression)
 
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
 	for l:argIdx in range(len(l:filteredArgs) - 1, 0, -1)
 	    if ! l:filteredArgs[l:argIdx]
 		call insert(l:deletedArgs, argv(l:argIdx), 0)
-		execute (l:argIdx + 1) . 'argdelete'
+		execute (l:argIdx + a:startArg) . 'argdelete'
 	    endif
 	endfor
     catch /^Vim\%((\a\+)\)\=:/
-	call ingo#msg#VimExceptionMsg()
+	call ingo#err#SetVimException()
+	return 0
     endtry
 
     if len(l:deletedArgs) == 0
 	call ingo#msg#WarningMsg('No arguments filtered out')
     else
-	echo printf('Deleted %d/%d: %s', len(l:deletedArgs), l:originalArgNum, join(l:deletedArgs))
+	echo printf('Deleted %d of %d: %s', len(l:deletedArgs), l:originalArgNum, join(l:deletedArgs))
     endif
+    return 1
 endfunction
 
 function! ArgsAndMore#Args#Negated( bang, filePatternsString )
