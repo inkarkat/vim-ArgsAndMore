@@ -18,22 +18,26 @@
 " REVISION	DATE		REMARKS
 "   2.11.003	13-Feb-2018	ENH: ArgsAndMore#Args#Filter(): Add a:startArg
 "                               and a:endArg and slice argv() with them.
+"                               Pass a:FilterGenerator to
+"                               ArgsAndMore#Args#Filter() and extract
+"                               ArgsAndMore#Args#FilterDirect() strategy.
+"                               ENH: Add ArgsAndMore#Args#FilterArg() strategy
+"                               that evaluates the filterExpression within the
+"                               argument buffer, via :Argdo.
 "   2.11.002	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
 "   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! ArgsAndMore#Args#Filter( startArg, endArg, filterExpression )
+function! ArgsAndMore#Args#Filter( FilterGenerator, startArg, endArg, filterExpression )
     if a:endArg == 0
 	call ingo#err#Set('No arguments')
 	return 0
     endif
 
-    let l:arguments = argv()[(a:startArg - 1) : (a:endArg - 1)]
-    let l:originalArgNum = len(l:arguments)
     let l:deletedArgs = []
     try
-	let l:filteredArgs = map(l:arguments, a:filterExpression)
+	let l:filteredArgs = call(a:FilterGenerator, [a:startArg, a:endArg, a:filterExpression])
 
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
@@ -51,10 +55,33 @@ function! ArgsAndMore#Args#Filter( startArg, endArg, filterExpression )
     if len(l:deletedArgs) == 0
 	call ingo#msg#WarningMsg('No arguments filtered out')
     else
+	let l:originalArgNum = a:endArg - a:startArg + 1
 	echo printf('Deleted %d of %d: %s', len(l:deletedArgs), l:originalArgNum, join(l:deletedArgs))
     endif
     return 1
 endfunction
+function! ArgsAndMore#Args#FilterDirect( startArg, endArg, filterExpression )
+    let l:arguments = argv()[(a:startArg - 1) : (a:endArg - 1)]
+    return map(l:arguments, a:filterExpression)
+endfunction
+function! ArgsAndMore#Args#FilterIterate( startArg, endArg, filterExpression )
+    let s:filteredArgs = []
+    call ArgsAndMore#Iteration#Argdo(a:startArg . ',' . a:endArg, printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
+    let l:filteredArgs = s:filteredArgs
+    unlet s:filteredArgs
+    return l:filteredArgs
+endfunction
+function! ArgsAndMore#Args#FilterArg( filterExpression )
+    try
+	call add(s:filteredArgs, ingo#actions#EvaluateWithVal(a:filterExpression, argv(argidx())))
+    catch /^Vim\%((\a\+)\)\=:/
+	" The expression is erroneous; as this probably affects all arguments,
+	" stop the iteration now.
+	call ingo#msg#VimExceptionMsg()
+	throw 'ArgsAndMore: Aborted'
+    endtry
+endfunction
+
 
 function! ArgsAndMore#Args#Negated( bang, filePatternsString )
     let l:filePatterns = ingo#cmdargs#file#SplitAndUnescape(a:filePatternsString)
