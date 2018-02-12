@@ -4,17 +4,19 @@
 "   - ingo/cmdargs/file.vim autoload script
 "   - ingo/collections.vim autoload script
 "   - ingo/compat.vim autoload script
+"   - ingo/event.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/regexp/fromwildcard.vim autoload script
 "
 "
-" Copyright: (C) 2015 Ingo Karkat
+" Copyright: (C) 2015-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.002	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
 "   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
@@ -112,12 +114,12 @@ endfunction
 
 
 function! ArgsAndMore#Args#ToQuickfix( startArg, endArg )
-    silent doautocmd QuickFixCmdPre args | " Allow hooking into the quickfix update.
+    silent call ingo#event#Trigger('QuickFixCmdPre args') | " Allow hooking into the quickfix update.
 	call setqflist(map(
 	\   argv()[a:startArg - 1 : a:endArg - 1],
 	\   "{'filename': v:val, 'lnum': 1}"
 	\))
-    silent doautocmd QuickFixCmdPost args | " Allow hooking into the quickfix update.
+    silent call ingo#event#Trigger('QuickFixCmdPost args') | " Allow hooking into the quickfix update.
 endfunction
 
 
