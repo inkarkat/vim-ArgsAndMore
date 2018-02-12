@@ -66,8 +66,11 @@ function! ArgsAndMore#Args#FilterDirect( startArg, endArg, filterExpression )
 endfunction
 function! ArgsAndMore#Args#FilterIterate( startArg, endArg, filterExpression )
     let s:filteredArgs = []
-    call ArgsAndMore#Iteration#Argdo(a:startArg . ',' . a:endArg, printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
-    let l:filteredArgs = s:filteredArgs
+    if ArgsAndMore#Iteration#Argdo(a:startArg . ',' . a:endArg, printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
+	let l:filteredArgs = s:filteredArgs
+    else
+	let l:filteredArgs = [] " Return empty List on error, so that no filtering takes place.
+    endif
     unlet s:filteredArgs
     return l:filteredArgs
 endfunction
