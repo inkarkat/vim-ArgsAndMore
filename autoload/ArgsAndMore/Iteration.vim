@@ -4,16 +4,19 @@
 "   - ArgsAndMore.vim autoload script
 "   - ingo/buffer.vim autoload script
 "   - ingo/collections.vim autoload script
+"   - ingo/err.vim autoload script
 "   - ingo/event.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/window/quickfix.vim autoload script
 "
-" Copyright: (C) 2015-2017 Ingo Karkat
+" Copyright: (C) 2015-2018 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.005	13-Feb-2018	Use proper error aborting via ingo#err#Set() for
+"                               argdo, bufdo, and quickfix.
 "   2.11.004	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
 "   2.10.003	12-Feb-2015	Factor out s:SetQuickfix() from
 "				s:ErrorsToQuickfix().
@@ -221,10 +224,10 @@ function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
 
     call s:ErrorsToQuickfix('argdo')
     if len(s:errors) == 1
-	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#err#Set(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s',
+	call ingo#err#Set(printf('%d error%s in argument%s %s',
 	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
 	\   (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')
 	\))
@@ -233,6 +236,7 @@ function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
     " To avoid a hit-enter prompt, we have to restore this _after_ the summary
     " error message.
     let &more = l:save_more
+    return (len(s:errors) == 0)
 endfunction
 if v:version < 704 || v:version == 704 && ! has('patch530')
 function! s:ArgIterate( startArg, endArg, command, postCommand )
@@ -293,16 +297,17 @@ function! s:ArgIterate( startArg, endArg, command, postCommand )
 
     call s:ErrorsToQuickfix('argdo')
     if len(s:errors) == 1
-	call ingo#msg#ErrorMsg(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#err#Set(printf('%d %s: %s', (s:errors[0][0] + 1), bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:argumentNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] + 1')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in argument%s %s',
+	call ingo#err#Set(printf('%d error%s in argument%s %s',
 	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
 	\   (len(l:argumentNumbers) == 1 ? '' : 's'), join(l:argumentNumbers, ', ')
 	\))
     endif
 
     let &more = l:save_more
+    return (len(s:errors) == 0)
 endfunction
 function! s:InterpretRange( rangeExpr )
     let l:range = a:rangeExpr
@@ -328,16 +333,17 @@ function! s:InterpretRange( rangeExpr )
 endfunction
 function! ArgsAndMore#Iteration#ArgdoWrapper( isNoRangeGiven, command, postCommand )
     if a:isNoRangeGiven
-	call ArgsAndMore#Iteration#Argdo('', a:command, a:postCommand)
+	return ArgsAndMore#Iteration#Argdo('', a:command, a:postCommand)
     else
 	try
 	    let l:range = matchstr(histget('cmd', -1), '\C\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
 	    if empty(l:range) | throw 'Invalid range' | endif
 	    let l:limits = s:InterpretRange(l:range)
 	    if len(l:limits) != 2 || l:limits[0] > l:limits[1] | throw 'Invalid range' | endif
-	    call s:ArgIterate(l:limits[0], l:limits[1], a:command, a:postCommand)
+	    return s:ArgIterate(l:limits[0], l:limits[1], a:command, a:postCommand)
 	catch
-	    call ingo#msg#ErrorMsg('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
+	    call ingo#err#Set('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
+	    return 0
 	endtry
     endif
 endfunction
@@ -410,16 +416,17 @@ function! ArgsAndMore#Iteration#Bufdo( range, command, postCommand )
 
     call s:ErrorsToQuickfix('bufdo')
     if len(s:errors) == 1
-	call ingo#msg#ErrorMsg(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
+	call ingo#err#Set(printf('%d %s: %s', s:errors[0][1], bufname(s:errors[0][1]), s:errors[0][2]))
     elseif len(s:errors) > 1
 	let l:bufferNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[1]')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in buffer%s %s',
+	call ingo#err#Set(printf('%d error%s in buffer%s %s',
 	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
 	\   (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')
 	))
     endif
 
     let &more = l:save_more
+    return (len(s:errors) == 0)
 endfunction
 
 
@@ -651,7 +658,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     endif
 
     if len(s:errors) == 1
-	call ingo#msg#ErrorMsg(printf('entry %d, buffer %d %s: %s',
+	call ingo#err#Set(printf('entry %d, buffer %d %s: %s',
 	\   (s:errors[0][0] == -1 ? '?' : s:errors[0][0] + 1),
 	\   s:errors[0][1],
 	\   bufname(s:errors[0][1]), s:errors[0][2]
@@ -659,7 +666,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     elseif len(s:errors) > 1
 	let l:entryNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[0] == -1 ? "?" : v:val[0] + 1')))
 	let l:bufferNumbers = s:sort(ingo#collections#Unique(map(copy(s:errors), 'v:val[1]')))
-	call ingo#msg#ErrorMsg(printf('%d error%s in entr%s %s; buffer%s %s',
+	call ingo#err#Set(printf('%d error%s in entr%s %s; buffer%s %s',
 	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
 	\   (len(l:entryNumbers) == 1 ? 'y' : 'ies'), join(l:entryNumbers, ', '),
 	\   (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')
@@ -667,6 +674,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     endif
 
     let &more = l:save_more
+    return (len(s:errors) == 0)
 endfunction
 
 let &cpo = s:save_cpo
