@@ -6,12 +6,14 @@
 "   - ArgsAndMore/Args.vim autoload script
 "   - ArgsAndMore/Iteration.vim autoload script
 "
-" Copyright: (C) 2012-2015 Ingo Karkat
+" Copyright: (C) 2012-2018 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.015	13-Feb-2018	Refactoring: Define s:hasArgumentAddressing to
+"                               avoid repetition of the conditional.
 "   2.10.014	11-Feb-2015	Factor out ArgsAndMore/Args.vim and
 "				ArgsAndMore/Iteration.vim modules.
 "   2.10.013	10-Feb-2015	FIX: :Bufdo..., :Win..., :Tab... in recent Vim
@@ -82,7 +84,8 @@ endif
 " Note: No -bar for the :...do commands; they can take a sequence of Vim
 " commands.
 
-if v:version == 704 && has('patch530') || v:version > 704
+let s:hasArgumentAddressing = (v:version == 704 && has('patch530') || v:version > 704)
+if s:hasArgumentAddressing
 command! -addr=buffers -range=% -nargs=1 -complete=command Bufdo       call ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, '')
 command! -addr=buffers -range=% -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, 'update')
 command! -addr=windows -range=% -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('<line1>,<line2>', <q-args>)
@@ -100,7 +103,7 @@ endif
 
 
 " Note: No -bar; can take a sequence of Vim commands.
-if v:version == 704 && has('patch530') || v:version > 704
+if s:hasArgumentAddressing
 command! -addr=arguments -range=% -nargs=1 -complete=command Argdo             call ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, '')
 command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, 'update')
 command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
@@ -129,7 +132,7 @@ command! -bang -nargs=+ -complete=file ArgsNegated call ArgsAndMore#Args#Negated
 " complains about globs with "E77: Too many file names".
 command! -bar -bang -nargs=* -complete=file CList call ArgsAndMore#Args#QuickfixList(getqflist(), <bang>0, <q-args>)
 command! -bar -bang -nargs=* -complete=file LList call ArgsAndMore#Args#QuickfixList(getloclist(0), <bang>0, <q-args>)
-if v:version == 704 && has('patch530') || v:version > 704
+if s:hasArgumentAddressing
 command! -bar -bang -addr=arguments -range=% -nargs=* -complete=file ArgsList       call ArgsAndMore#Args#List(<line1>, <line2>, <bang>0, <q-args>)
 command! -bar       -addr=arguments -range=%                         ArgsToQuickfix call ArgsAndMore#Args#ToQuickfix(<line1>, <line2>)
 else
@@ -142,7 +145,7 @@ command! -bar -count CListToArgsAdd call ArgsAndMore#Args#QuickfixToArgs(getqfli
 command! -bar -bang  LListToArgs    call ArgsAndMore#Args#QuickfixToArgs(getloclist(0), 0, 0, '<bang>')
 command! -bar -count LListToArgsAdd call ArgsAndMore#Args#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
-if v:version == 704 && has('patch530') || v:version > 704
+if s:hasArgumentAddressing
 command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, '', <line1>, <line2>, <q-args>, '')
 command! -addr=buffers -range=% -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, '', <line1>, <line2>, <q-args>, '')
 command! -addr=buffers -range=% -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, '', <line1>, <line2>, <q-args>, '')
@@ -158,6 +161,7 @@ command!                        -nargs=1 -complete=command CDoFixEntry call Args
 command!                        -nargs=1 -complete=command LDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', 0, 0, <q-args>, '')
 endif
 
+unlet! s:hasArgumentAddressing
 let &cpo = s:save_cpo
 unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
