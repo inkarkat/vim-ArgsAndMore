@@ -16,6 +16,8 @@
 "   2.11.016	13-Feb-2018	ENH: Support [range] for :ArgsFilter (without
 "                               workaround for older Vim versions, though).
 "                               ENH: Add :ArgsFilterDo variant.
+"                               Use proper error aborting for :Bufdo, :Argdo,
+"                               and :[CL]Do*.
 "   2.11.015	13-Feb-2018	Refactoring: Define s:hasArgumentAddressing to
 "                               avoid repetition of the conditional.
 "   2.10.014	11-Feb-2015	Factor out ArgsAndMore/Args.vim and
@@ -90,15 +92,15 @@ endif
 
 let s:hasArgumentAddressing = (v:version == 704 && has('patch530') || v:version > 704)
 if s:hasArgumentAddressing
-command! -addr=buffers -range=% -nargs=1 -complete=command Bufdo       call ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, 'update')
+command! -addr=buffers -range=% -nargs=1 -complete=command Bufdo       if ! ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -range=% -nargs=1 -complete=command BufdoWrite  if ! ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, 'update') | echoerr ingo#err#Get() | endif
 command! -addr=windows -range=% -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('<line1>,<line2>', <q-args>)
 command! -addr=windows -range=% -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo('<line1>,<line2>', <q-args>)
 command! -addr=tabs    -range=% -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo('<line1>,<line2>', <q-args>)
 command! -addr=tabs    -range=% -nargs=1 -complete=command Tabwindo    call ArgsAndMore#Tabwindo('<line1>,<line2>', <q-args>)
 else
-command!                        -nargs=1 -complete=command Bufdo       call ArgsAndMore#Iteration#Bufdo('', <q-args>, '')
-command!                        -nargs=1 -complete=command BufdoWrite  call ArgsAndMore#Iteration#Bufdo('', <q-args>, 'update')
+command!                        -nargs=1 -complete=command Bufdo       if ! ArgsAndMore#Iteration#Bufdo('', <q-args>, '') | echoerr ingo#err#Get() | endif
+command!                        -nargs=1 -complete=command BufdoWrite  if ! ArgsAndMore#Iteration#Bufdo('', <q-args>, 'update') | echoerr ingo#err#Get() | endif
 command!                        -nargs=1 -complete=command Windo       call ArgsAndMore#Windo('', <q-args>)
 command!                        -nargs=1 -complete=command Winbufdo    call ArgsAndMore#Winbufdo('', <q-args>)
 command!                        -nargs=1 -complete=command Tabdo       call ArgsAndMore#Tabdo('', <q-args>)
@@ -108,20 +110,20 @@ endif
 
 " Note: No -bar; can take a sequence of Vim commands.
 if s:hasArgumentAddressing
-command! -addr=arguments -range=% -nargs=1 -complete=command Argdo             call ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, '')
-command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, 'update')
+command! -addr=arguments -range=% -nargs=1 -complete=command Argdo             if ! ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoWrite        if ! ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, 'update') | echoerr ingo#err#Get() | endif
 command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\                                                                              call ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
+\                                                                              if ! ArgsAndMore#Iteration#Argdo('<line1>,<line2>', <q-args>, 'call ArgsAndMore#ConfirmedUpdate()') | echoerr ingo#err#Get() | endif
 else
 " Note: Cannot use -range and <line1>, <line2>, because in them, identifiers
 " like ".+1" and "$" are translated into buffer line numbers, and we need
 " argument indices! Instead, use -range=-1 as a marker, and extract the original
 " range from the command history. (This means that we can only use the command
 " interactively, not in a script.)
-command! -range=-1 -nargs=1 -complete=command Argdo             call ArgsAndMore#Iteration#ArgdoWrapper((<count> == -1), <q-args>, '')
-command! -range=-1 -nargs=1 -complete=command ArgdoWrite        call ArgsAndMore#Iteration#ArgdoWrapper((<count> == -1), <q-args>, 'update')
+command! -range=-1 -nargs=1 -complete=command Argdo             if ! ArgsAndMore#Iteration#ArgdoWrapper((<count> == -1), <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -range=-1 -nargs=1 -complete=command ArgdoWrite        if ! ArgsAndMore#Iteration#ArgdoWrapper((<count> == -1), <q-args>, 'update') | echoerr ingo#err#Get() | endif
 command! -range=-1 -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\                                                               call ArgsAndMore#Iteration#ArgdoWrapper((<count> == -1), <q-args>, 'call ArgsAndMore#ConfirmedUpdate()')
+\                                                               if ! ArgsAndMore#Iteration#ArgdoWrapper((<count> == -1), <q-args>, 'call ArgsAndMore#ConfirmedUpdate()') | echoerr ingo#err#Get() | endif
 endif
 
 command! -bar ArgdoErrors call ArgsAndMore#Iteration#ArgdoErrors()
@@ -156,19 +158,19 @@ command! -bar -bang  LListToArgs    call ArgsAndMore#Args#QuickfixToArgs(getlocl
 command! -bar -count LListToArgsAdd call ArgsAndMore#Args#QuickfixToArgs(getloclist(0), 1, <count>, '')
 
 if s:hasArgumentAddressing
-command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, '', <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, '', <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, '', <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command LDoFile     call ArgsAndMore#Iteration#QuickfixDo(1, 1, '', <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command CDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(0, 0, 'CDoFixEntry', <line1>, <line2>, <q-args>, '')
-command! -addr=buffers -range=% -nargs=1 -complete=command LDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', <line1>, <line2>, <q-args>, '')
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoEntry    if ! ArgsAndMore#Iteration#QuickfixDo(0, 0, '', <line1>, <line2>, <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoEntry    if ! ArgsAndMore#Iteration#QuickfixDo(1, 0, '', <line1>, <line2>, <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoFile     if ! ArgsAndMore#Iteration#QuickfixDo(0, 1, '', <line1>, <line2>, <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoFile     if ! ArgsAndMore#Iteration#QuickfixDo(1, 1, '', <line1>, <line2>, <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -range=% -nargs=1 -complete=command CDoFixEntry if ! ArgsAndMore#Iteration#QuickfixDo(0, 0, 'CDoFixEntry', <line1>, <line2>, <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -range=% -nargs=1 -complete=command LDoFixEntry if ! ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', <line1>, <line2>, <q-args>, '') | echoerr ingo#err#Get() | endif
 else
-command!                        -nargs=1 -complete=command CDoEntry    call ArgsAndMore#Iteration#QuickfixDo(0, 0, '', 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command LDoEntry    call ArgsAndMore#Iteration#QuickfixDo(1, 0, '', 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command CDoFile     call ArgsAndMore#Iteration#QuickfixDo(0, 1, '', 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command LDoFile     call ArgsAndMore#Iteration#QuickfixDo(1, 1, '', 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command CDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(0, 0, 'CDoFixEntry', 0, 0, <q-args>, '')
-command!                        -nargs=1 -complete=command LDoFixEntry call ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', 0, 0, <q-args>, '')
+command!                        -nargs=1 -complete=command CDoEntry    if ! ArgsAndMore#Iteration#QuickfixDo(0, 0, '', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
+command!                        -nargs=1 -complete=command LDoEntry    if ! ArgsAndMore#Iteration#QuickfixDo(1, 0, '', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
+command!                        -nargs=1 -complete=command CDoFile     if ! ArgsAndMore#Iteration#QuickfixDo(0, 1, '', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
+command!                        -nargs=1 -complete=command LDoFile     if ! ArgsAndMore#Iteration#QuickfixDo(1, 1, '', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
+command!                        -nargs=1 -complete=command CDoFixEntry if ! ArgsAndMore#Iteration#QuickfixDo(0, 0, 'CDoFixEntry', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
+command!                        -nargs=1 -complete=command LDoFixEntry if ! ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
 endif
 
 unlet! s:hasArgumentAddressing
