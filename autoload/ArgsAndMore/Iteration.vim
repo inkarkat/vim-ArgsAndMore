@@ -1,17 +1,20 @@
 " ArgsAndMore/Iteration.vim: Commands for iteration over arguments etc. that is more than a simple wrapper.
 "
 " DEPENDENCIES:
+"   - ArgsAndMore.vim autoload script
 "   - ingo/buffer.vim autoload script
 "   - ingo/collections.vim autoload script
+"   - ingo/event.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/window/quickfix.vim autoload script
 "
-" Copyright: (C) 2015 Ingo Karkat
+" Copyright: (C) 2015-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.004	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
 "   2.10.003	12-Feb-2015	Factor out s:SetQuickfix() from
 "				s:ErrorsToQuickfix().
 "				Replace s:GetCurrentQuickfixIdx() with different
@@ -105,9 +108,9 @@ function! s:SetQuickfix( command, entries )
 	return
     endif
 
-    silent execute 'doautocmd QuickFixCmdPre' a:command | " Allow hooking into the quickfix update.
+    silent call ingo#event#Trigger('QuickFixCmdPre ' . a:command)   " Allow hooking into the quickfix update.
 	call setqflist(a:entries)
-    silent execute 'doautocmd QuickFixCmdPost' a:command | " Allow hooking into the quickfix update.
+    silent call ingo#event#Trigger('QuickFixCmdPost ' . a:command)  " Allow hooking into the quickfix update.
 endfunction
 function! s:ErrorsToQuickfix( command )
     call s:SetQuickfix(a:command, map(copy(s:errors), 's:ErrorToQuickfixEntry(v:val)'))
