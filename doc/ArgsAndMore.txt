@@ -183,7 +183,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					    *ArgsAndMore-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.023 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.035 or
   higher.
 
 ==============================================================================
@@ -227,7 +227,7 @@ HISTORY							 *ArgsAndMore-history*
 - Support [range] on :ArgsFilter.
 - Add :ArgsFilterDo variant of :ArgsFilter.
 - Use proper error aborting for :Bufdo, :Argdo, and :[CL]Do*.
-  *** You need to update to ingo-library (vimscript #4433) version 1.023! ***
+  *** You need to update to ingo-library (vimscript #4433) version 1.035! ***
 
 2.10	08-Mar-2015
 - FIX: :Bufdo..., :Win..., :Tab... in recent Vim 7.4 defaults to wrong range.

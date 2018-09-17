@@ -1,13 +1,17 @@
 " ArgsAndMore/Args.vim: Commands around the argument list.
 "
 " DEPENDENCIES:
+"   - ArgsAndMore/Iteration.vim autoload script
+"   - ingo/actions.vim autoload script
 "   - ingo/cmdargs/file.vim autoload script
 "   - ingo/collections.vim autoload script
 "   - ingo/compat.vim autoload script
+"   - ingo/err.vim autoload script
 "   - ingo/event.vim autoload script
 "   - ingo/fs/path.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - ingo/regexp/fromwildcard.vim autoload script
+"   - ingo/workingdir.vim autoload script
 "
 "
 " Copyright: (C) 2015-2018 Ingo Karkat
@@ -16,6 +20,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.004	02-Mar-2018	Refactoring: Use ingo#workingdir#Chdir().
 "   2.11.003	13-Feb-2018	ENH: ArgsAndMore#Args#Filter(): Add a:startArg
 "                               and a:endArg and slice argv() with them.
 "                               Pass a:FilterGenerator to
@@ -105,8 +110,7 @@ function! ArgsAndMore#Args#Negated( bang, filePatternsString )
 
 	" XXX: Need to issue a dummy :chdir to convert relative args
 	" "../other/path" to a path relative to the CWD "/real/other/path".
-	let l:chdirCommand = (haslocaldir() ? 'lchdir!' : 'chdir!')
-	execute l:chdirCommand ingo#compat#fnameescape(getcwd())
+	call ingo#workingdir#Chdir(getcwd())
 
 	execute 'argdelete' join(l:argNegationGlobs)
 	execute 'first' . a:bang
