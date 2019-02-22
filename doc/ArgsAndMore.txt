@@ -227,6 +227,7 @@ HISTORY							 *ArgsAndMore-history*
 - Support [range] on :ArgsFilter.
 - Add :ArgsFilterDo variant of :ArgsFilter.
 - Use proper error aborting for :Bufdo, :Argdo, and :[CL]Do*.
+- FIX: Avoid creating jump on :windo / :tabdo.
   *** You need to update to ingo-library (vimscript #4433) version 1.035! ***
 
 2.10	08-Mar-2015
@@ -313,7 +314,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2018 Ingo Karkat
+Copyright: (C) 2012-2019 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>

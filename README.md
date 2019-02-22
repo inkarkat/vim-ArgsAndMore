@@ -1,4 +1,4 @@
-ARGS AND MORE   
+ARGS AND MORE
 ===============================================================================
 _by Ingo Karkat_
 
@@ -202,7 +202,9 @@ HISTORY
 - Support [range] on :ArgsFilter.
 - Add :ArgsFilterDo variant of :ArgsFilter.
 - Use proper error aborting for :Bufdo, :Argdo, and :[CL]Do\*.
-  __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.035!__
+- FIX: Avoid creating jump on :windo / :tabdo.
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.035!__
 
 ##### 2.10    08-Mar-2015
 - FIX: :Bufdo..., :Win..., :Tab... in recent Vim 7.4 defaults to wrong range.
@@ -227,14 +229,17 @@ HISTORY
 - Support ranges in :ArgsList and :ArgsToQuickfix if supported by Vim.
 - Switch to ingo#regexp#fromwildcard#AnchoredToPathBoundaries() to correctly
   enforce path boundaries in :ArgsList {glob}.
-  __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.023!__
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.023!__
 
 ##### 1.22    24-Mar-2014
 - Add :CList and :LList, analog to :ArgsList.
 - FIX: :ArgsList printed "cnt" is zero-based, not 1-based.
 - Add :ArgdoConfirmWrite variant of :ArgdoWrite.
 - Also catch custom exceptions and errors caused by the passed user command
-  (or configured post-command). __You need to update to ingo-library
+  (or configured post-command).
+
+__You need to update to ingo-library
   ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.017!__
 
 ##### 1.21    22-Nov-2013
@@ -242,11 +247,15 @@ HISTORY
   the default of g:ArgsAndMore\_InteractiveCommandPattern.
 - Minor: Exclude further special buffers from syntax enabling.
 - :ArgsList also handles \*\* and [...] wildcards.
-- Move escapings.vim into ingo-library. __You need to update to ingo-library
+- Move escapings.vim into ingo-library.
+
+__You need to update to ingo-library
   ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.014!__
 
 ##### 1.20    19-Jul-2013
-- Add dependency to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)). __You need to separately
+- Add dependency to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)).
+
+__You need to separately
   install ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.007 (or higher)!__
 - ENH: Add :ArgdoWrite and :BufdoWrite variants that also perform an automatic
   :update.
@@ -288,7 +297,7 @@ HISTORY
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2018 Ingo Karkat -
+Copyright: (C) 2012-2019 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat <ingo@karkat.de>

@@ -5,12 +5,13 @@
 "   - ingo/query/substitute.vim autoload script
 "   - ingo/regexp/fromwildcard.vim autoload script
 "
-" Copyright: (C) 2012-2015 Ingo Karkat
+" Copyright: (C) 2012-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.023	22-Feb-2019	FIX: Avoid creating jump on :windo / :tabdo.
 "   2.10.022	11-Feb-2015	Factor out ArgsAndMore/Args.vim module.
 "   2.10.021	10-Feb-2015	Rename s:ArgExecute() to s:ArgOrBufExecute() to
 "				better convey its dual use.
@@ -131,7 +132,7 @@ function! ArgsAndMore#Windo( range, command )
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
 	let l:previousWinNr = winnr('#') ? winnr('#') : 1
-	    execute a:range 'windo call s:Execute(a:command)'
+	    execute 'keepjumps' a:range 'windo call s:Execute(a:command)'
 	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
@@ -147,7 +148,7 @@ function! ArgsAndMore#Winbufdo( range, command )
 	let l:originalWinNr = winnr()
 	let l:previousWinNr = winnr('#') ? winnr('#') : 1
 
-	    execute a:range 'windo'
+	    execute 'keepjumps' a:range 'windo'
 	    \   'if index(l:buffers, bufnr('')) == -1 |'
 	    \       'call add(l:buffers, bufnr('')) |'
 	    \       'call s:Execute(a:command)'
@@ -160,13 +161,13 @@ endfunction
 
 function! ArgsAndMore#Tabdo( range, command )
     let l:originalTabNr = tabpagenr()
-	execute a:range 'tabdo call s:Execute(a:command)'
+	execute 'keepjumps' a:range 'tabdo call s:Execute(a:command)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 
 function! ArgsAndMore#Tabwindo( range, command )
     let l:originalTabNr = tabpagenr()
-	execute a:range 'tabdo call ArgsAndMore#Windo("", a:command)'
+	execute 'keepjumps' a:range 'tabdo call ArgsAndMore#Windo("", a:command)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 
