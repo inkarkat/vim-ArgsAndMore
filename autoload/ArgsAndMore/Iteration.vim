@@ -9,12 +9,13 @@
 "   - ingo/msg.vim autoload script
 "   - ingo/window/quickfix.vim autoload script
 "
-" Copyright: (C) 2015-2018 Ingo Karkat
+" Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.11.006	24-Feb-2019	Avoid creating jump on :bufdo.
 "   2.11.005	13-Feb-2018	Use proper error aborting via ingo#err#Set() for
 "                               argdo, bufdo, and quickfix.
 "   2.11.004	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
@@ -406,7 +407,7 @@ function! ArgsAndMore#Iteration#Bufdo( range, command, postCommand )
     " the command modified, but didn't update the buffer).
     try
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute a:range 'bufdo call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute 'keepjumps' a:range 'bufdo call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
