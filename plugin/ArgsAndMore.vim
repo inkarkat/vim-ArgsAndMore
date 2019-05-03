@@ -7,7 +7,7 @@
 "   - ingo/err.vim autoload script
 "   - Requires Vim 7.0 or higher.
 "
-" Copyright: (C) 2012-2018 Ingo Karkat
+" Copyright: (C) 2012-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -90,7 +90,7 @@ endif
 " Note: No -bar for the :...do commands; they can take a sequence of Vim
 " commands.
 
-let s:hasArgumentAddressing = (v:version == 704 && has('patch530') || v:version > 704)
+let s:hasArgumentAddressing = (v:version == 704 && has('patch542') || v:version > 704)
 if s:hasArgumentAddressing
 command! -addr=buffers -range=% -nargs=1 -complete=command Bufdo       if ! ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, '') | echoerr ingo#err#Get() | endif
 command! -addr=buffers -range=% -nargs=1 -complete=command BufdoWrite  if ! ArgsAndMore#Iteration#Bufdo('<line1>,<line2>', <q-args>, 'update') | echoerr ingo#err#Get() | endif

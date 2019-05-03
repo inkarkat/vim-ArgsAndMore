@@ -239,7 +239,7 @@ function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
     let &more = l:save_more
     return (len(s:errors) == 0)
 endfunction
-if v:version < 704 || v:version == 704 && ! has('patch530')
+if v:version < 704 || v:version == 704 && ! has('patch542')
 function! s:ArgIterate( startArg, endArg, command, postCommand )
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
