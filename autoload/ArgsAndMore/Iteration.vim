@@ -183,7 +183,7 @@ function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax, ... )
 
     return l:isSuccess
 endfunction
-function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
+function! ArgsAndMore#Iteration#Argdo( bang, range, command, postCommand )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     " Temporarily turn off 'more', as this interferes with the "automated batch
@@ -209,7 +209,7 @@ function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute a:range . 'argdo call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute a:range . 'argdo' . a:bang 'call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -240,7 +240,7 @@ function! ArgsAndMore#Iteration#Argdo( range, command, postCommand )
     return (len(s:errors) == 0)
 endfunction
 if v:version < 704 || v:version == 704 && ! has('patch542')
-function! s:ArgIterate( startArg, endArg, command, postCommand )
+function! s:ArgIterate( bang, startArg, endArg, command, postCommand )
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
     let l:restoreCommand = s:ArgumentListRestoreCommand()
@@ -259,6 +259,7 @@ function! s:ArgIterate( startArg, endArg, command, postCommand )
     let s:range = [a:startArg, a:endArg]
     let s:errors = []
     let l:isAborted = 0
+    let l:firstBang = a:bang
 
     try
 	for l:arg in range(a:startArg, a:endArg)
@@ -268,8 +269,9 @@ function! s:ArgIterate( startArg, endArg, command, postCommand )
 	    " interspersed on the screen, capture the output from the file
 	    " change and :echo it ourselves.
 	    redir => l:nextArgumentOutput
-		silent execute l:arg . 'argument'
+		silent execute l:arg . 'argument' . l:firstBang
 	    redir END
+	    let l:firstBang = ''
 	    let l:nextArgumentOutput = substitute(l:nextArgumentOutput, '^\_s*', '', '')
 	    if ! empty(l:nextArgumentOutput)
 		echo l:nextArgumentOutput
@@ -332,16 +334,16 @@ function! s:InterpretRange( rangeExpr )
 	return []
     endtry
 endfunction
-function! ArgsAndMore#Iteration#ArgdoWrapper( isNoRangeGiven, command, postCommand )
+function! ArgsAndMore#Iteration#ArgdoWrapper( bang, isNoRangeGiven, command, postCommand )
     if a:isNoRangeGiven
-	return ArgsAndMore#Iteration#Argdo('', a:command, a:postCommand)
+	return ArgsAndMore#Iteration#Argdo(a:bang, '', a:command, a:postCommand)
     else
 	try
 	    let l:range = matchstr(histget('cmd', -1), '\C\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
 	    if empty(l:range) | throw 'Invalid range' | endif
 	    let l:limits = s:InterpretRange(l:range)
 	    if len(l:limits) != 2 || l:limits[0] > l:limits[1] | throw 'Invalid range' | endif
-	    return s:ArgIterate(l:limits[0], l:limits[1], a:command, a:postCommand)
+	    return s:ArgIterate(a:bang, l:limits[0], l:limits[1], a:command, a:postCommand)
 	catch
 	    call ingo#err#Set('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	    return 0
@@ -392,7 +394,7 @@ function! ArgsAndMore#Iteration#ArgdoDeleteSuccessful()
     echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
 endfunction
 
-function! ArgsAndMore#Iteration#Bufdo( range, command, postCommand )
+function! ArgsAndMore#Iteration#Bufdo( bang, range, command, postCommand )
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
     let l:restoreCommand = s:BufferListRestoreCommand()
@@ -407,7 +409,7 @@ function! ArgsAndMore#Iteration#Bufdo( range, command, postCommand )
     " the command modified, but didn't update the buffer).
     try
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute 'keepjumps' a:range 'bufdo call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute 'keepjumps' a:range 'bufdo' . a:bang 'call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()

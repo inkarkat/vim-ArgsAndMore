@@ -43,12 +43,13 @@ RELATED WORKS								     *
 USAGE							   *ArgsAndMore-usage*
 
 								      *:Bufdo*
-:[range]Bufdo {cmd}	Execute {cmd} in each buffer in the buffer list, then
+:[range]Bufdo[!] {cmd}	Execute {cmd} in each buffer in the buffer list, then
 			return back to the original one.
 			Any encountered errors are also put into the
 			|quickfix| list.
 								 *:BufdoWrite*
-:[range]BufdoWrite {cmd}Execute {cmd} in each buffer in the buffer list and
+:[range]BufdoWrite[!] {cmd}
+			Execute {cmd} in each buffer in the buffer list and
 			automatically persist any changes (|:update|).
 								      *:Windo*
 :[range]Windo {cmd}	Execute {cmd} in each window, then return back to the
@@ -64,7 +65,7 @@ USAGE							   *ArgsAndMore-usage*
 :[range]Tabwindo {cmd}	Execute {cmd} in each open window on each tab page,
 			then return back to the original one.
 								      *:Argdo*
-:[range]Argdo {cmd}	Execute {cmd} for each file in the argument list, then
+:[range]Argdo[!] {cmd}	Execute {cmd} for each file in the argument list, then
 			return back to the original file and argument.
 			[range] is emulated for older Vim versions, but can
 			only be used interactively (not in scripts).
@@ -78,9 +79,10 @@ USAGE							   *ArgsAndMore-usage*
 			Also, any encountered errors are put into the
 			|quickfix| list.
 					    *:ArgdoWrite* *:ArgdoConfirmWrite*
-:[range]ArgdoWrite {cmd}Execute {cmd} in each buffer in the argument list and
+:[range]ArgdoWrite[!] {cmd}
+			Execute {cmd} in each buffer in the argument list and
 			automatically persist any changes (|:update|).
-:[range]ArgdoConfirmWrite {cmd}
+:[range]ArgdoConfirmWrite[!] {cmd}
 			Like |:ArgdoWrite|, but confirm each write, allowing
 			to review the automatically applied changes of {cmd}
 			before persisting them. When you quit the argument
@@ -104,7 +106,7 @@ USAGE							   *ArgsAndMore-usage*
 			allows you to |:argdelete| multiple arguments at once
 			and to delete without specifying the full filename.
 							       *:ArgsFilterDo*
-:[range]ArgsFilterDo {expr}
+:[range]ArgsFilterDo[!] {expr}
 			Apply the |filter()| of {expr} to the argument list
 			within the context of each argument, and keep only
 			those where {expr} yields true. In contrast to
@@ -228,6 +230,9 @@ HISTORY							 *ArgsAndMore-history*
 - Add :ArgsFilterDo variant of :ArgsFilter.
 - Use proper error aborting for :Bufdo, :Argdo, and :[CL]Do*.
 - FIX: Avoid creating jump on :bufdo / :windo / :tabdo.
+- Support [!] on :Bufdo[Write], :Argdo[[Confirm]Write], ArgsFilterDo to force
+  iteration when the current buffer has unpersisted modifications and 'hidden'
+  isn't set (just like with the built-in :argdo, :bufdo).
   *** You need to update to ingo-library (vimscript #4433) version 1.035! ***
 
 2.10	08-Mar-2015

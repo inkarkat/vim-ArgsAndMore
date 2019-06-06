@@ -30,12 +30,13 @@ processed arguments have been removed.
 USAGE
 ------------------------------------------------------------------------------
 
-    :[range]Bufdo {cmd}     Execute {cmd} in each buffer in the buffer list, then
+    :[range]Bufdo[!] {cmd}  Execute {cmd} in each buffer in the buffer list, then
                             return back to the original one.
                             Any encountered errors are also put into the
                             quickfix list.
 
-    :[range]BufdoWrite {cmd}Execute {cmd} in each buffer in the buffer list and
+    :[range]BufdoWrite[!] {cmd}
+                            Execute {cmd} in each buffer in the buffer list and
                             automatically persist any changes (:update).
 
     :[range]Windo {cmd}     Execute {cmd} in each window, then return back to the
@@ -51,7 +52,7 @@ USAGE
     :[range]Tabwindo {cmd}  Execute {cmd} in each open window on each tab page,
                             then return back to the original one.
 
-    :[range]Argdo {cmd}     Execute {cmd} for each file in the argument list, then
+    :[range]Argdo[!] {cmd}  Execute {cmd} for each file in the argument list, then
                             return back to the original file and argument.
                             [range] is emulated for older Vim versions, but can
                             only be used interactively (not in scripts).
@@ -65,9 +66,10 @@ USAGE
                             Also, any encountered errors are put into the
                             quickfix list.
 
-    :[range]ArgdoWrite {cmd}Execute {cmd} in each buffer in the argument list and
+    :[range]ArgdoWrite[!] {cmd}
+                            Execute {cmd} in each buffer in the argument list and
                             automatically persist any changes (:update).
-    :[range]ArgdoConfirmWrite {cmd}
+    :[range]ArgdoConfirmWrite[!] {cmd}
                             Like :ArgdoWrite, but confirm each write, allowing
                             to review the automatically applied changes of {cmd}
                             before persisting them. When you quit the argument
@@ -89,7 +91,7 @@ USAGE
                             allows you to :argdelete multiple arguments at once
                             and to delete without specifying the full filename.
 
-    :[range]ArgsFilterDo {expr}
+    :[range]ArgsFilterDo[!] {expr}
                             Apply the filter() of {expr} to the argument list
                             within the context of each argument, and keep only
                             those where {expr} yields true. In contrast to
@@ -203,6 +205,9 @@ HISTORY
 - Add :ArgsFilterDo variant of :ArgsFilter.
 - Use proper error aborting for :Bufdo, :Argdo, and :[CL]Do\*.
 - FIX: Avoid creating jump on :bufdo / :windo / :tabdo.
+- Support [!] on :Bufdo[Write], :Argdo[[Confirm]Write], ArgsFilterDo to force
+  iteration when the current buffer has unpersisted modifications and 'hidden'
+  isn't set (just like with the built-in :argdo, :bufdo).
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.035!__
 
@@ -262,7 +267,7 @@ __You need to separately
 - ENH: Add errors from :Argdo and :Bufdo to the quickfix list to allow easier
   rework.
 - Avoid script errors when using :Argdo 3s/foo/bar
-- Minor: Change :Argdo[Write] -range=-1 default check to use <count>, which
+- Minor: Change :Argdo[Write] -range=-1 default check to use &lt;count&gt;, which
   maintains the actual -1 default, and therefore also delivers correct results
   when on line 1.
 - ENH: Enable syntax highlighting on :Argdo / :Bufdo on freshly loaded buffers
@@ -285,7 +290,7 @@ __You need to separately
   error reporting of :Argdo.
 
 ##### 1.01    27-Aug-2012
-- Do not use <f-args> because of its unescaping behavior.
+- Do not use &lt;f-args&gt; because of its unescaping behavior.
 - FIX: "E480: No match" on :ArgsNegated with ../other/path relative argument;
   need to issue a dummy :chdir to convert relative args before doing the
   :argdelete.
@@ -300,4 +305,4 @@ __You need to separately
 Copyright: (C) 2012-2019 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
-Maintainer:     Ingo Karkat <ingo@karkat.de>
+Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
