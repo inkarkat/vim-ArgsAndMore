@@ -1,52 +1,12 @@
 " ArgsAndMore/Iteration.vim: Commands for iteration over arguments etc. that is more than a simple wrapper.
 "
 " DEPENDENCIES:
-"   - ArgsAndMore.vim autoload script
-"   - ingo/buffer.vim autoload script
-"   - ingo/collections.vim autoload script
-"   - ingo/err.vim autoload script
-"   - ingo/event.vim autoload script
-"   - ingo/msg.vim autoload script
-"   - ingo/window/quickfix.vim autoload script
+"   - ingo-library.vim plugin
 "
 " Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.11.006	24-Feb-2019	Avoid creating jump on :bufdo.
-"   2.11.005	13-Feb-2018	Use proper error aborting via ingo#err#Set() for
-"                               argdo, bufdo, and quickfix.
-"   2.11.004	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
-"   2.10.003	12-Feb-2015	Factor out s:SetQuickfix() from
-"				s:ErrorsToQuickfix().
-"				Replace s:GetCurrentQuickfixIdx() with different
-"				algorithm that counts the quickfix entries for a
-"				skipped buffer (by using the current index to
-"				go forward through the quickfix list until
-"				another buffer is encountered), avoiding the
-"				costly re-determining of the current index.
-"				Clone quickfix entries of skipped buffers over
-"				to the fix command quickfix list.
-"				s:DetermineSkippedEntries() already knows the
-"				skipped indices and just needs to return the
-"				entries for ArgsAndMore#Iteration#Quickfix() to
-"				accumulate. To keep the errors of non-skipped
-"				entries in the right position, these need to be
-"				interspersed; s:ConsumeErrors() does this during
-"				skipping, and once more after iteration for the
-"				remaining ones.
-"   2.10.002	11-Feb-2015	ENH: Implement :CDoFixEntry command via
-"				additional a:fixCommand argument on
-"				ArgsAndMore#Iteration#QuickfixDo().
-"				Correct error reporting of :CDo... commands to
-"				list entries (renamed from "locations") without
-"				off-by-one, and additionally the buffer(s).
-"				Extend s:ArgOrBufExecute() to pass in quickfix
-"				entry index, to capture this also when the
-"				individual a:command fails.
-"   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
 

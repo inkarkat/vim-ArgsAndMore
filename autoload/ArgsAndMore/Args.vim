@@ -1,36 +1,13 @@
 " ArgsAndMore/Args.vim: Commands around the argument list.
 "
 " DEPENDENCIES:
-"   - ArgsAndMore/Iteration.vim autoload script
-"   - ingo/actions.vim autoload script
-"   - ingo/cmdargs/file.vim autoload script
-"   - ingo/collections.vim autoload script
-"   - ingo/compat.vim autoload script
-"   - ingo/err.vim autoload script
-"   - ingo/event.vim autoload script
-"   - ingo/fs/path.vim autoload script
-"   - ingo/msg.vim autoload script
-"   - ingo/regexp/fromwildcard.vim autoload script
-"   - ingo/workingdir.vim autoload script
+"   - ingo-library.vim plugin
 "
 "
 " Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.11.004	02-Mar-2018	Refactoring: Use ingo#workingdir#Chdir().
-"   2.11.003	13-Feb-2018	ENH: ArgsAndMore#Args#Filter(): Add a:startArg
-"                               and a:endArg and slice argv() with them.
-"                               Pass a:FilterGenerator to
-"                               ArgsAndMore#Args#Filter() and extract
-"                               ArgsAndMore#Args#FilterDirect() strategy.
-"                               ENH: Add ArgsAndMore#Args#FilterArg() strategy
-"                               that evaluates the filterExpression within the
-"                               argument buffer, via :Argdo.
-"   2.11.002	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
-"   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
 
