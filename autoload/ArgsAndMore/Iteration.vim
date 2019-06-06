@@ -423,7 +423,7 @@ function! ArgsAndMore#Iteration#Bufdo( range, command, postCommand )
 	call ingo#err#Set(printf('%d error%s in buffer%s %s',
 	\   len(s:errors), (len(s:errors) == 1 ? '' : 's'),
 	\   (len(l:bufferNumbers) == 1 ? '' : 's'), join(l:bufferNumbers, ', ')
-	))
+	\))
     endif
 
     let &more = l:save_more
