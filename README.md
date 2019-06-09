@@ -200,7 +200,7 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.11    RELEASEME
+##### 2.11    09-Jun-2019
 - Support [range] on :ArgsFilter.
 - Add :ArgsFilterDo variant of :ArgsFilter.
 - Use proper error aborting for :Bufdo, :Argdo, and :[CL]Do\*.
