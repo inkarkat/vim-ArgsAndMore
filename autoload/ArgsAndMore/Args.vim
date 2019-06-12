@@ -1,35 +1,17 @@
 " ArgsAndMore/Args.vim: Commands around the argument list.
 "
 " DEPENDENCIES:
-"   - ingo/cmdargs/file.vim autoload script
-"   - ingo/collections.vim autoload script
-"   - ingo/compat.vim autoload script
-"   - ingo/event.vim autoload script
-"   - ingo/fs/path.vim autoload script
-"   - ingo/msg.vim autoload script
-"   - ingo/regexp/fromwildcard.vim autoload script
+"   - ingo-library.vim plugin
 "
 "
-" Copyright: (C) 2015-2018 Ingo Karkat
+" Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.11.003	13-Feb-2018	ENH: ArgsAndMore#Args#Filter(): Add a:startArg
-"                               and a:endArg and slice argv() with them.
-"                               Pass a:FilterGenerator to
-"                               ArgsAndMore#Args#Filter() and extract
-"                               ArgsAndMore#Args#FilterDirect() strategy.
-"                               ENH: Add ArgsAndMore#Args#FilterArg() strategy
-"                               that evaluates the filterExpression within the
-"                               argument buffer, via :Argdo.
-"   2.11.002	08-Dec-2017	Replace :doautocmd with ingo#event#Trigger().
-"   2.10.001	11-Feb-2015	file creation from autoload/ArgsAndMore.vim
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! ArgsAndMore#Args#Filter( FilterGenerator, startArg, endArg, filterExpression )
+function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filterExpression )
     if a:endArg == 0
 	call ingo#err#Set('No arguments')
 	return 0
@@ -37,7 +19,7 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, startArg, endArg, filterExpr
 
     let l:deletedArgs = []
     try
-	let l:filteredArgs = call(a:FilterGenerator, [a:startArg, a:endArg, a:filterExpression])
+	let l:filteredArgs = call(a:FilterGenerator, [a:bang, a:startArg, a:endArg, a:filterExpression])
 
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
@@ -60,13 +42,13 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, startArg, endArg, filterExpr
     endif
     return 1
 endfunction
-function! ArgsAndMore#Args#FilterDirect( startArg, endArg, filterExpression )
+function! ArgsAndMore#Args#FilterDirect( bang, startArg, endArg, filterExpression )
     let l:arguments = argv()[(a:startArg - 1) : (a:endArg - 1)]
     return map(l:arguments, a:filterExpression)
 endfunction
-function! ArgsAndMore#Args#FilterIterate( startArg, endArg, filterExpression )
+function! ArgsAndMore#Args#FilterIterate( bang, startArg, endArg, filterExpression )
     let s:filteredArgs = []
-    if ArgsAndMore#Iteration#Argdo(a:startArg . ',' . a:endArg, printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
+    if ArgsAndMore#Iteration#Argdo(a:bang, a:startArg . ',' . a:endArg, printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
 	let l:filteredArgs = s:filteredArgs
     else
 	let l:filteredArgs = [] " Return empty List on error, so that no filtering takes place.
@@ -105,8 +87,7 @@ function! ArgsAndMore#Args#Negated( bang, filePatternsString )
 
 	" XXX: Need to issue a dummy :chdir to convert relative args
 	" "../other/path" to a path relative to the CWD "/real/other/path".
-	let l:chdirCommand = (haslocaldir() ? 'lchdir!' : 'chdir!')
-	execute l:chdirCommand ingo#compat#fnameescape(getcwd())
+	call ingo#workingdir#Chdir(getcwd())
 
 	execute 'argdelete' join(l:argNegationGlobs)
 	execute 'first' . a:bang
