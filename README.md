@@ -89,10 +89,12 @@ USAGE
                             :Argdo command.
 
     :[range]ArgsFilter {expr}
-                            Apply the filter() of {expr} to the argument list,
-                            and keep only those where {expr} yields true. This
-                            allows you to :argdelete multiple arguments at once
-                            and to delete without specifying the full filename.
+                            Apply the filter() of {expr} to the files in the
+                            argument list (i.e. values from argv(), referenced
+                            as v:val), and keep only those where {expr} yields
+                            true. This allows you to :argdelete multiple
+                            arguments at once and to delete without specifying the
+                            full filename.
 
     :[range]ArgsFilterDo[!] {expr}
                             Apply the filter() of {expr} to the argument list
