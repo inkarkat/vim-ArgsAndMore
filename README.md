@@ -19,8 +19,11 @@ processed arguments have been removed.
 - The :ArgsNegated command was inspired by the following Stack Overflow
   question:
     http://stackoverflow.com/questions/11547662/how-can-i-negate-a-glob-in-vim
-- The https://github.com/nelstrom/vim-qargs plugin has a :Qargs command
+- vim-qargs (https://github.com/nelstrom/vim-qargs) has a :Qargs command
   similar (but more simplistic) than :CListToArgs.
+- vim-lister (https://github.com/tommcdo/vim-lister) also has (among others)
+  :Qargs and :Largs commands, and an :Afilter equivalent of :ArgsFilter (that
+  takes a pattern instead of an expression, though).
 - Pretty Args ([vimscript #4681](http://www.vim.org/scripts/script.php?script_id=4681)) provides an :Arg command which takes
   filename-modifiers to print a shortened argument list, e.g. just the
   filenames.
