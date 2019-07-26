@@ -101,7 +101,12 @@ USAGE							   *ArgsAndMore-usage*
 :ArgdoDeleteSuccessful	Delete those arguments from the argument list that
 			didn't cause any error messages during the last
 			|:Argdo| command.
-
+								    *:ArgDrop*
+:[N]ArgDrop[!] [N]	Delete the current [N] argument(s) from the argument
+			list and edit the next one instead. Complains when the
+			current file is not contained in the argument list
+			unless [!] is given (which is also required to
+			|abandon| changes in the current buffer).
 								 *:ArgsFilter*
 :[range]ArgsFilter {expr}
 			Apply the |filter()| of {expr} to the files in the
@@ -229,6 +234,9 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
+
+2.20	RELEASEME
+- Add :ArgDrop command.
 
 2.11	09-Jun-2019
 - Support [range] on :ArgsFilter.

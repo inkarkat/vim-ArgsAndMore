@@ -71,6 +71,8 @@ endif
 command! -bar ArgdoErrors call ArgsAndMore#Iteration#ArgdoErrors()
 command! -bar ArgdoDeleteSuccessful call ArgsAndMore#Iteration#ArgdoDeleteSuccessful()
 
+command! -bar -bang -count=1 ArgDrop if ! ArgsAndMore#Arg#Drop('<bang>', <count>) | echoerr ingo#err#Get() | endif
+
 
 if s:hasArgumentAddressing
 command! -addr=arguments       -range=% -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif

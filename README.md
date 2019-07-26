@@ -88,6 +88,12 @@ USAGE
                             didn't cause any error messages during the last
                             :Argdo command.
 
+    :[N]ArgDrop[!] [N]      Delete the current [N] argument(s) from the argument
+                            list and edit the next one instead. Complains when the
+                            current file is not contained in the argument list
+                            unless [!] is given (which is also required to
+                            abandon changes in the current buffer).
+
     :[range]ArgsFilter {expr}
                             Apply the filter() of {expr} to the files in the
                             argument list (i.e. values from argv(), referenced
@@ -204,6 +210,9 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 2.20    RELEASEME
+- Add :ArgDrop command.
 
 ##### 2.11    09-Jun-2019
 - Support [range] on :ArgsFilter.
