@@ -94,6 +94,11 @@ USAGE
                             unless [!] is given (which is also required to
                             abandon changes in the current buffer).
 
+    :[range]ArgsDeleteExisting[!]
+                            Delete any files from the argument list that do (with
+                            [!]: not) exist in the file system (actually: can[not]
+                            be read).
+
     :[range]ArgsFilter {expr}
                             Apply the filter() of {expr} to the files in the
                             argument list (i.e. values from argv(), referenced
@@ -213,6 +218,9 @@ HISTORY
 
 ##### 2.20    RELEASEME
 - Add :ArgDrop command.
+- Add :ArgsDeleteExisting specialization of :ArgsFilter. Useful to throw out
+  files that have been removed from the file system (with !), or to drop
+  files that have been created and saved (without !).
 
 ##### 2.11    09-Jun-2019
 - Support [range] on :ArgsFilter.
