@@ -3,8 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-"
-" Copyright: (C) 2015-2019 Ingo Karkat
+" Copyright: (C) 2015-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -135,12 +134,12 @@ endfunction
 
 
 function! ArgsAndMore#Args#ToQuickfix( startArg, endArg )
-    silent call ingo#event#Trigger('QuickFixCmdPre args') | " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPre(1, 'args')
 	call setqflist(map(
 	\   argv()[a:startArg - 1 : a:endArg - 1],
 	\   "{'filename': v:val, 'lnum': 1}"
 	\))
-    silent call ingo#event#Trigger('QuickFixCmdPost args') | " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPost(1, 'args')
 endfunction
 
 

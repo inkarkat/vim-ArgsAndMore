@@ -72,9 +72,9 @@ function! s:SetQuickfix( command, entries )
 	return
     endif
 
-    silent call ingo#event#Trigger('QuickFixCmdPre ' . a:command)   " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPre(1, a:command)
 	call setqflist(a:entries)
-    silent call ingo#event#Trigger('QuickFixCmdPost ' . a:command)  " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPost(1, a:command)
 endfunction
 function! s:ErrorsToQuickfix( command )
     call s:SetQuickfix(a:command, map(copy(s:errors), 's:ErrorToQuickfixEntry(v:val)'))
