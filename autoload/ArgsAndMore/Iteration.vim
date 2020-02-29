@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2019 Ingo Karkat
+" Copyright: (C) 2015-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -429,11 +429,8 @@ function! s:Get( list, idx, default )
     let l:entry = get(a:list, a:idx, a:default)
     return (empty(l:entry) ? a:default : l:entry)
 endfunction
-function! s:GetQuickfixList( isLocationList )
-    return (a:isLocationList ? getloclist(0) : getqflist())
-endfunction
 function! s:GetQuickfixEntry( isLocationList, quickfixIdx )
-    return get(s:GetQuickfixList(a:isLocationList), a:quickfixIdx, {})
+    return get(ingo#window#quickfix#GetOtherList(a:isLocationList ? 2 : 1), a:quickfixIdx, {})
 endfunction
 function! s:ConsumeErrors( consumedErrorsCnt )
     let l:consumedErrors = s:errors[ a:consumedErrorsCnt : ]
@@ -443,7 +440,7 @@ endfunction
 function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrorsCnt )
     let l:bufNr = bufnr('')
     let l:idx = a:quickfixIdx
-    let l:list = s:GetQuickfixList(a:isLocationList)
+    let l:list = ingo#window#quickfix#GetOtherList(a:isLocationList ? 2 : 1)
     if l:list[l:idx].bufnr != l:bufNr
 	call ingo#msg#WarningMsg(printf('Cannot associate buffer %d with entry %d; some entries may get lost.', l:bufNr, a:quickfixIdx))
 	return [a:quickfixIdx, 0, []]
