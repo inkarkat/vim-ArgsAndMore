@@ -394,8 +394,9 @@ endfunction
 
 
 
-function! s:GetCurrentQuickfixCnt( isLocationList )
-    let l:currentEntryCommand = (a:isLocationList ? 'll' : 'cc')
+function! s:GetCurrentQuickfixCnt( quickfixType )
+    let l:quickfixTypePrefix = ingo#window#quickfix#GetPrefix(a:quickfixType)
+    let l:currentEntryCommand = l:quickfixTypePrefix . l:quickfixTypePrefix
 
     " The :cc command will echo something like "(3 of 42): ..." when the
     " quickfix window isn't open.
@@ -411,7 +412,7 @@ function! s:GetCurrentQuickfixCnt( isLocationList )
 
     " Else, the quickfix window must be open, so we have to go there and read
     " off the current line.
-    let l:openCommand = (a:isLocationList ? 'l' : 'c') . 'open'
+    let l:openCommand = l:quickfixTypePrefix . 'open'
 
     let l:originalWinNr = winnr()
     let l:previousWinNr = winnr('#') ? winnr('#') : 1
@@ -429,18 +430,18 @@ function! s:Get( list, idx, default )
     let l:entry = get(a:list, a:idx, a:default)
     return (empty(l:entry) ? a:default : l:entry)
 endfunction
-function! s:GetQuickfixEntry( isLocationList, quickfixIdx )
-    return get(ingo#window#quickfix#GetOtherList(a:isLocationList ? 2 : 1), a:quickfixIdx, {})
+function! s:GetQuickfixEntry( quickfixType, quickfixIdx )
+    return get(ingo#window#quickfix#GetOtherList(a:quickfixType), a:quickfixIdx, {})
 endfunction
 function! s:ConsumeErrors( consumedErrorsCnt )
     let l:consumedErrors = s:errors[ a:consumedErrorsCnt : ]
     let l:consumedErrorsCnt = len(s:errors)
     return [l:consumedErrorsCnt, map(l:consumedErrors, 's:ErrorToQuickfixEntry(v:val)')]
 endfunction
-function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrorsCnt )
+function! s:DetermineSkippedEntries( quickfixType, quickfixIdx, consumedErrorsCnt )
     let l:bufNr = bufnr('')
     let l:idx = a:quickfixIdx
-    let l:list = ingo#window#quickfix#GetOtherList(a:isLocationList ? 2 : 1)
+    let l:list = ingo#window#quickfix#GetOtherList(a:quickfixType)
     if l:list[l:idx].bufnr != l:bufNr
 	call ingo#msg#WarningMsg(printf('Cannot associate buffer %d with entry %d; some entries may get lost.', l:bufNr, a:quickfixIdx))
 	return [a:quickfixIdx, 0, []]
@@ -454,8 +455,8 @@ function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrors
     let [l:consumedErrorsCnt, l:consumedErrors] = s:ConsumeErrors(a:consumedErrorsCnt)
     return [l:idx, l:consumedErrorsCnt, l:consumedErrors + l:list[ a:quickfixIdx : l:idx ]]
 endfunction
-function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
-    let l:qfEntry = s:GetQuickfixEntry(a:isLocationList, a:quickfixIdx)
+function! s:JoinErrorWithQuickfix( quickfixType, errorMessage, quickfixIdx )
+    let l:qfEntry = s:GetQuickfixEntry(a:quickfixType, a:quickfixIdx)
     let l:qfText = get(l:qfEntry, 'text', '')
     let l:qfCol = (empty(l:qfEntry) ? 0 : ingo#window#quickfix#TranslateVirtualColToByteCount(l:qfEntry))
     return [
@@ -467,7 +468,8 @@ function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
     \]
 endfunction
 function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand, startBufNr, endBufNr, command, postCommand )
-    let l:prefix = (a:isLocationList ? 'l' : 'c')
+    let l:quickfixType = (a:isLocationList ? 2 : 1)
+    let l:quickfixTypePrefix = ingo#window#quickfix#GetPrefix(l:quickfixType)
 
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
@@ -481,7 +483,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	" target beforehand, just restore the original buffer (via the alternate
 	" file), and go back to the quickfix window. This means that we're
 	" losing the buffer's alternate file.
-	let l:restoreCommand = s:JoinCommands(['buffer #', l:prefix . 'open'])
+	let l:restoreCommand = s:JoinCommands(['buffer #', l:quickfixTypePrefix . 'open'])
     else
 	let l:restoreCommand = s:BufferListRestoreCommand()
     endif
@@ -505,15 +507,15 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     let l:consumedErrorsCnt = 0
 
     let l:hasRange = (! empty(a:startBufNr) && ! empty(a:endBufNr))
-    let l:firstIteration = l:prefix . 'first'
-    let l:nextFileIteration = l:prefix . 'nfile'
-    let l:nextIteration = l:prefix . (a:isFiles ? 'nfile' : 'next')
+    let l:firstIteration = l:quickfixTypePrefix . 'first'
+    let l:nextFileIteration = l:quickfixTypePrefix . 'nfile'
+    let l:nextIteration = l:quickfixTypePrefix . (a:isFiles ? 'nfile' : 'next')
     let l:iterationCommand = l:firstIteration
     let l:originalEntryCommand = ''
     try
-	let l:originalCnt = s:GetCurrentQuickfixCnt(a:isLocationList)
+	let l:originalCnt = s:GetCurrentQuickfixCnt(l:quickfixType)
 	if l:originalCnt != -1
-	    let l:originalEntryCommand = s:JoinCommands([l:originalCnt . l:prefix . l:prefix])
+	    let l:originalEntryCommand = s:JoinCommands([l:originalCnt . l:quickfixTypePrefix . l:quickfixTypePrefix])
 	endif
 
 	while 1
@@ -542,7 +544,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 		" counter doesn't properly track the quickfix list any more.
 		" Find out how many entries have been skipped (and store those
 		" for a fix command).
-		let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(a:isLocationList, l:idx, l:consumedErrorsCnt)
+		let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(l:quickfixType, l:idx, l:consumedErrorsCnt)
 		let l:entries += l:newEntries
 		continue
 	    endif
@@ -563,14 +565,14 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	    if l:isSuccess
 		if ! empty(a:fixCommand) && b:changedtick == l:changedtick
 		    " No change means the attempted fix failed.
-		    call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx))
+		    call add(s:errors, s:JoinErrorWithQuickfix(l:quickfixType, 'Attempted fix failed', l:idx))
 		    call ingo#msg#ErrorMsg('Attempted fix failed')
 		endif
 	    else
 		" s:ArgOrBufExecute() has already captured the actual error;
 		" append the text from the quickfix entry now to complete the
 		" picture.
-		let l:qfText = get(s:GetQuickfixEntry(a:isLocationList, l:idx), 'text', '')
+		let l:qfText = get(s:GetQuickfixEntry(l:quickfixType, l:idx), 'text', '')
 		if ! empty(l:qfText)
 		    let s:errors[-1][2] .= ' on: ' . l:qfText
 		endif
@@ -586,7 +588,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     catch /^Vim\%((\a\+)\)\=:E553:/ " E553: No more items
 	" This is the expected end of iteration.
     catch /^Vim\%((\a\+)\)\=:/
-	call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), l:idx))
+	call add(s:errors, s:JoinErrorWithQuickfix(l:quickfixType, ingo#msg#MsgFromVimException(), l:idx))
 	call ingo#msg#VimExceptionMsg()
     catch /^ArgsAndMore: Aborted/
 	" This internal exception is thrown to stop the iteration through the
