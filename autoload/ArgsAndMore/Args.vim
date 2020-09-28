@@ -88,7 +88,10 @@ function! ArgsAndMore#Args#Negated( bang, filePatternsString )
 	" "../other/path" to a path relative to the CWD "/real/other/path".
 	call ingo#workingdir#Chdir(getcwd())
 
-	execute 'argdelete' join(l:argNegationGlobs)
+	# We must not fnameescape() for :argdelete, as globs have to be kept
+	# unescaped. However, spaces and cmdline-special characters have to be
+	# escaped.
+	execute 'argdelete' join(map(l:argNegationGlobs, 'ingo#escape#file#CmdlineSpecialEscape(escape(v:val, " "))'))
 	execute 'first' . a:bang
     catch /^Vim\%((\a\+)\)\=:/
 	call ingo#msg#VimExceptionMsg()

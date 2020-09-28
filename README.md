@@ -184,7 +184,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.041 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
   higher.
 
 CONFIGURATION
@@ -221,8 +221,10 @@ HISTORY
 - Add :ArgsDeleteExisting specialization of :ArgsFilter. Useful to throw out
   files that have been removed from the file system (with !), or to drop
   files that have been created and saved (without !).
+- FIX: :ArgsNegated does not handle arguments with escaped spaces and
+  cmdline-special characters (e.g. #).
 
-__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.041!__
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.043!__
 
 ##### 2.11    09-Jun-2019
 - Support [range] on :ArgsFilter.
