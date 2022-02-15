@@ -34,44 +34,44 @@ endif
 
 let s:hasArgumentAddressing = (v:version == 704 && has('patch542') || v:version > 704)
 if s:hasArgumentAddressing
-command! -addr=buffers -bang -range=% -nargs=1 -complete=command Bufdo          if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '<line1>,<line2>', <q-args>, '') | echoerr ingo#err#Get() | endif
-command! -addr=buffers -bang -range=% -nargs=1 -complete=command BufdoWrite     if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '<line1>,<line2>', <q-args>, 'update') | echoerr ingo#err#Get() | endif
-command! -addr=windows -bang -range=% -nargs=1 -complete=command Windo          call ArgsAndMore#Windo('<line1>,<line2>', <q-args>, '')
-command! -addr=windows -bang -range=% -nargs=1 -complete=command WindoWrite     call ArgsAndMore#Windo('<line1>,<line2>', <q-args>, 'update')
-command! -addr=windows -bang -range=% -nargs=1 -complete=command Winbufdo       call ArgsAndMore#Winbufdo('<line1>,<line2>', <q-args>, '')
-command! -addr=windows -bang -range=% -nargs=1 -complete=command WinbufdoWrite  call ArgsAndMore#Winbufdo('<line1>,<line2>', <q-args>, 'update')
-command! -addr=tabs    -bang -range=% -nargs=1 -complete=command Tabdo          call ArgsAndMore#Tabdo('<line1>,<line2>', <q-args>, '')
-command! -addr=tabs    -bang -range=% -nargs=1 -complete=command Tabwindo       call ArgsAndMore#Tabwindo('<line1>,<line2>', <q-args>, '')
-command! -addr=tabs    -bang -range=% -nargs=1 -complete=command TabwindoWrite  call ArgsAndMore#Tabwindo('<line1>,<line2>', <q-args>, 'update')
+command! -addr=buffers -bang -range=% -nargs=1 -complete=command Bufdo          if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '<line1>,<line2>', '', <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=buffers -bang -range=% -nargs=1 -complete=command BufdoWrite     if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '<line1>,<line2>', '&l:modifiable', <q-args>, 'update') | echoerr ingo#err#Get() | endif
+command! -addr=windows -bang -range=% -nargs=1 -complete=command Windo          call ArgsAndMore#Windo('<line1>,<line2>', '', <q-args>, '')
+command! -addr=windows -bang -range=% -nargs=1 -complete=command WindoWrite     call ArgsAndMore#Windo('<line1>,<line2>', '&l:modifiable', <q-args>, 'update')
+command! -addr=windows -bang -range=% -nargs=1 -complete=command Winbufdo       call ArgsAndMore#Winbufdo('<line1>,<line2>', '', <q-args>, '')
+command! -addr=windows -bang -range=% -nargs=1 -complete=command WinbufdoWrite  call ArgsAndMore#Winbufdo('<line1>,<line2>', '&l:modifiable', <q-args>, 'update')
+command! -addr=tabs    -bang -range=% -nargs=1 -complete=command Tabdo          call ArgsAndMore#Tabdo('<line1>,<line2>', '', <q-args>, '')
+command! -addr=tabs    -bang -range=% -nargs=1 -complete=command Tabwindo       call ArgsAndMore#Tabwindo('<line1>,<line2>', '', <q-args>, '')
+command! -addr=tabs    -bang -range=% -nargs=1 -complete=command TabwindoWrite  call ArgsAndMore#Tabwindo('<line1>,<line2>', '&l:modifiable', <q-args>, 'update')
 else
-command!               -bang          -nargs=1 -complete=command Bufdo          if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '', <q-args>, '') | echoerr ingo#err#Get() | endif
-command!               -bang          -nargs=1 -complete=command BufdoWrite     if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '', <q-args>, 'update') | echoerr ingo#err#Get() | endif
-command!               -bang          -nargs=1 -complete=command Windo          call ArgsAndMore#Windo('', <q-args>, '')
-command!               -bang          -nargs=1 -complete=command WindoWrite     call ArgsAndMore#Windo('', <q-args>, 'update')
-command!               -bang          -nargs=1 -complete=command Winbufdo       call ArgsAndMore#Winbufdo('', <q-args>, '')
-command!               -bang          -nargs=1 -complete=command WinbufdoWrite  call ArgsAndMore#Winbufdo('', <q-args>, 'update')
-command!               -bang          -nargs=1 -complete=command Tabdo          call ArgsAndMore#Tabdo('', <q-args>, '')
-command!               -bang          -nargs=1 -complete=command Tabwindo       call ArgsAndMore#Tabwindo('', <q-args>, '')
-command!               -bang          -nargs=1 -complete=command TabwindoWrite  call ArgsAndMore#Tabwindo('', <q-args>, 'update')
+command!               -bang          -nargs=1 -complete=command Bufdo          if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '', '', <q-args>, '') | echoerr ingo#err#Get() | endif
+command!               -bang          -nargs=1 -complete=command BufdoWrite     if ! ArgsAndMore#Iteration#Bufdo(<q-bang>, '', '&l:modifiable', <q-args>, 'update') | echoerr ingo#err#Get() | endif
+command!               -bang          -nargs=1 -complete=command Windo          call ArgsAndMore#Windo('', '', <q-args>, '')
+command!               -bang          -nargs=1 -complete=command WindoWrite     call ArgsAndMore#Windo('', '&l:modifiable', <q-args>, 'update')
+command!               -bang          -nargs=1 -complete=command Winbufdo       call ArgsAndMore#Winbufdo('', '', <q-args>, '')
+command!               -bang          -nargs=1 -complete=command WinbufdoWrite  call ArgsAndMore#Winbufdo('', '&l:modifiable', <q-args>, 'update')
+command!               -bang          -nargs=1 -complete=command Tabdo          call ArgsAndMore#Tabdo('', '', <q-args>, '')
+command!               -bang          -nargs=1 -complete=command Tabwindo       call ArgsAndMore#Tabwindo('', '', <q-args>, '')
+command!               -bang          -nargs=1 -complete=command TabwindoWrite  call ArgsAndMore#Tabwindo('', '&l:modifiable', <q-args>, 'update')
 endif
 
 
 " Note: No -bar; can take a sequence of Vim commands.
 if s:hasArgumentAddressing
-command! -addr=arguments -range=% -nargs=1 -complete=command Argdo             if ! ArgsAndMore#Iteration#Argdo(<q-bang>, '<line1>,<line2>', <q-args>, '') | echoerr ingo#err#Get() | endif
-command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoWrite        if ! ArgsAndMore#Iteration#Argdo(<q-bang>, '<line1>,<line2>', <q-args>, 'update') | echoerr ingo#err#Get() | endif
+command! -addr=arguments -range=% -nargs=1 -complete=command Argdo             if ! ArgsAndMore#Iteration#Argdo(<q-bang>, '<line1>,<line2>', '', <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoWrite        if ! ArgsAndMore#Iteration#Argdo(<q-bang>, '<line1>,<line2>', '&l:modifiable', <q-args>, 'update') | echoerr ingo#err#Get() | endif
 command! -addr=arguments -range=% -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\                                                                              if ! ArgsAndMore#Iteration#Argdo(<q-bang>, '<line1>,<line2>', <q-args>, 'call ArgsAndMore#ConfirmedUpdate()') | echoerr ingo#err#Get() | endif
+\                                                                              if ! ArgsAndMore#Iteration#Argdo(<q-bang>, '<line1>,<line2>', '&l:modifiable', <q-args>, 'call ArgsAndMore#ConfirmedUpdate()') | echoerr ingo#err#Get() | endif
 else
 " Note: Cannot use -range and <line1>, <line2>, because in them, identifiers
 " like ".+1" and "$" are translated into buffer line numbers, and we need
 " argument indices! Instead, use -range=-1 as a marker, and extract the original
 " range from the command history. (This means that we can only use the command
 " interactively, not in a script.)
-command! -range=-1 -nargs=1 -complete=command Argdo             if ! ArgsAndMore#Iteration#ArgdoWrapper(<q-bang>, (<count> == -1), <q-args>, '') | echoerr ingo#err#Get() | endif
-command! -range=-1 -nargs=1 -complete=command ArgdoWrite        if ! ArgsAndMore#Iteration#ArgdoWrapper(<q-bang>, (<count> == -1), <q-args>, 'update') | echoerr ingo#err#Get() | endif
+command! -range=-1 -nargs=1 -complete=command Argdo             if ! ArgsAndMore#Iteration#ArgdoWrapper(<q-bang>, (<count> == -1), '', <q-args>, '') | echoerr ingo#err#Get() | endif
+command! -range=-1 -nargs=1 -complete=command ArgdoWrite        if ! ArgsAndMore#Iteration#ArgdoWrapper(<q-bang>, (<count> == -1), '&l:modifiable', <q-args>, 'update') | echoerr ingo#err#Get() | endif
 command! -range=-1 -nargs=1 -complete=command ArgdoConfirmWrite call ArgsAndMore#ConfirmResetChoice() |
-\                                                               if ! ArgsAndMore#Iteration#ArgdoWrapper(<q-bang>, (<count> == -1), <q-args>, 'call ArgsAndMore#ConfirmedUpdate()') | echoerr ingo#err#Get() | endif
+\                                                               if ! ArgsAndMore#Iteration#ArgdoWrapper(<q-bang>, (<count> == -1), '&l:modifiable', <q-args>, 'call ArgsAndMore#ConfirmedUpdate()') | echoerr ingo#err#Get() | endif
 endif
 
 command! -bar ArgdoErrors call ArgsAndMore#Iteration#ArgdoErrors()

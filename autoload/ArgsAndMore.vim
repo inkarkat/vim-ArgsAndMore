@@ -13,8 +13,12 @@ set cpo&vim
 function! ArgsAndMore#AfterExecute()
     execute g:ArgsAndMore_AfterCommand
 endfunction
-function! s:Execute( command, postCommand )
+function! s:Execute( Predicate, command, postCommand )
     try
+	if ! empty(a:Predicate) && ! ingo#actions#EvaluateWithValOrFunc(a:Predicate)
+	    return
+	endif
+
 	execute a:command
 	if ! empty(a:postCommand)
 	    execute a:postCommand
@@ -28,20 +32,20 @@ function! s:Execute( command, postCommand )
     call ArgsAndMore#AfterExecute()
 endfunction
 
-function! ArgsAndMore#Windo( range, command, postCommand )
+function! ArgsAndMore#Windo( range, Predicate, command, postCommand )
     " By entering a window, its height is potentially increased from 0 to 1 (the
     " minimum for the current window). To avoid any modification, save the window
     " sizes and restore them after visiting all windows.
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
 	let l:previousWinNr = winnr('#') ? winnr('#') : 1
-	    execute 'keepjumps' a:range 'windo call s:Execute(a:command, a:postCommand)'
+	    execute 'keepjumps' a:range 'windo call s:Execute(a:Predicate, a:command, a:postCommand)'
 	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
 
-function! ArgsAndMore#Winbufdo( range, command, postCommand )
+function! ArgsAndMore#Winbufdo( range, Predicate, command, postCommand )
     let l:buffers = []
 
     " By entering a window, its height is potentially increased from 0 to 1 (the
@@ -54,7 +58,7 @@ function! ArgsAndMore#Winbufdo( range, command, postCommand )
 	    execute 'keepjumps' a:range 'windo'
 	    \   'if index(l:buffers, bufnr('')) == -1 |'
 	    \       'call add(l:buffers, bufnr('')) |'
-	    \       'call s:Execute(a:command, a:postCommand)'
+	    \       'call s:Execute(a:Predicate, a:command, a:postCommand)'
 	    \   'endif'
 
 	execute l:previousWinNr . 'wincmd w'
@@ -62,15 +66,15 @@ function! ArgsAndMore#Winbufdo( range, command, postCommand )
     silent! execute l:originalWindowLayout
 endfunction
 
-function! ArgsAndMore#Tabdo( range, command, postCommand )
+function! ArgsAndMore#Tabdo( range, Predicate, command, postCommand )
     let l:originalTabNr = tabpagenr()
-	execute 'keepjumps' a:range 'tabdo call s:Execute(a:command, a:postCommand)'
+	execute 'keepjumps' a:range 'tabdo call s:Execute(a:Predicate, a:command, a:postCommand)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 
-function! ArgsAndMore#Tabwindo( range, command, postCommand )
+function! ArgsAndMore#Tabwindo( range, Predicate, command, postCommand )
     let l:originalTabNr = tabpagenr()
-	execute 'keepjumps' a:range 'tabdo call ArgsAndMore#Windo("", a:command, a:postCommand)'
+	execute 'keepjumps' a:range 'tabdo call ArgsAndMore#Windo("", a:Predicate, a:command, a:postCommand)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 

@@ -39,22 +39,23 @@ USAGE
                             quickfix list.
 
     :[range]BufdoWrite {cmd}
-                            Execute {cmd} in each buffer in the buffer list and
-                            automatically persist any changes (:update).
+                            Execute {cmd} in each modifiable buffer in the buffer
+                            list and automatically persist any changes (:update).
 
     :[range]Windo {cmd}     Execute {cmd} in each window, then return back to the
                             original one.
     :[range]WindoWrite {cmd}
-                            Execute {cmd} in each window and automatically persist
-                            any changes (:update).
+                            Execute {cmd} in each window showing a modifiable
+                            buffer and automatically persist any changes (:update).
 
     :[range]Winbufdo {cmd}  Execute {cmd} in each different buffer shown in one of
                             the windows in the current tab page (once per buffer),
                             then return back to the original one.
     :[range]WinbufdoWrite {cmd}
-                            Execute {cmd} in each different buffer shown in one of
-                            the windows in the current tab page (once per buffer)
-                            and automatically persist any changes (:update).
+                            Execute {cmd} in each different modifiable buffer
+                            shown in one of the windows in the current tab page
+                            (once per buffer) and automatically persist any
+                            changes (:update).
 
     :[range]Tabdo {cmd}     Execute {cmd} once in each tab page, then return back
                             to the original one.
@@ -63,7 +64,8 @@ USAGE
                             then return back to the original one.
     :[range]TabwindoWrite {cmd}
                             Execute {cmd} in each open window on each tab page,
-                            and automatically persist any changes (:update).
+                            that shows a modifiable buffer and automatically
+                            persist any changes (:update).
 
     :[range]Argdo[!] {cmd}  Execute {cmd} for each file in the argument list, then
                             return back to the original file and argument.
@@ -80,8 +82,9 @@ USAGE
                             quickfix list.
 
     :[range]ArgdoWrite[!] {cmd}
-                            Execute {cmd} in each buffer in the argument list and
-                            automatically persist any changes (:update).
+                            Execute {cmd} in each modifiable buffer in the
+                            argument list and automatically persist any changes
+                            (:update).
     :[range]ArgdoConfirmWrite[!] {cmd}
                             Like :ArgdoWrite, but confirm each write, allowing
                             to review the automatically applied changes of {cmd}
@@ -235,6 +238,9 @@ HISTORY
   cmdline-special characters (e.g. #).
 - Add :WindoWrite, :WinbufdoWrite, :TabwindoWrite variants that automatically
   persist any changes (like :ArgdoWrite).
+- Only iterate over modifiable buffers in the :\*Write commands; skip buffers
+  where 'modifiable' is unset (e.g. terminal buffers), to avoid errors on
+  attempted modification and :update.
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.043!__
 
