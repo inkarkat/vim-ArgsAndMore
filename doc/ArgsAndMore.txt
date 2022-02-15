@@ -51,22 +51,32 @@ USAGE							   *ArgsAndMore-usage*
 			Any encountered errors are also put into the
 			|quickfix| list.
 								 *:BufdoWrite*
-:[range]BufdoWrite[!] {cmd}
+:[range]BufdoWrite {cmd}
 			Execute {cmd} in each buffer in the buffer list and
 			automatically persist any changes (|:update|).
-								      *:Windo*
+							*:Windo* *:WindoWrite*
 :[range]Windo {cmd}	Execute {cmd} in each window, then return back to the
 			original one.
-								   *:Winbufdo*
+:[range]WindoWrite {cmd}
+			Execute {cmd} in each window and automatically persist
+			any changes (|:update|).
+						  *:Winbufdo* *:WinbufdoWrite*
 :[range]Winbufdo {cmd}	Execute {cmd} in each different buffer shown in one of
 			the windows in the current tab page (once per buffer),
 			then return back to the original one.
+:[range]WinbufdoWrite {cmd}
+			Execute {cmd} in each different buffer shown in one of
+			the windows in the current tab page (once per buffer)
+			and automatically persist any changes (|:update|).
 								      *:Tabdo*
 :[range]Tabdo {cmd}	Execute {cmd} once in each tab page, then return back
 			to the original one.
-								   *:Tabwindo*
+						  *:Tabwindo* *:TabwindoWrite*
 :[range]Tabwindo {cmd}	Execute {cmd} in each open window on each tab page,
 			then return back to the original one.
+:[range]TabwindoWrite {cmd}
+			Execute {cmd} in each open window on each tab page,
+			and automatically persist any changes (|:update|).
 								      *:Argdo*
 :[range]Argdo[!] {cmd}	Execute {cmd} for each file in the argument list, then
 			return back to the original file and argument.
@@ -247,6 +257,8 @@ HISTORY							 *ArgsAndMore-history*
   files that have been created and saved (without !).
 - FIX: :ArgsNegated does not handle arguments with escaped spaces and
   cmdline-special characters (e.g. #).
+- Add :WindoWrite, :WinbufdoWrite, :TabwindoWrite variants that automatically
+  persist any changes (like :ArgdoWrite).
   *** You need to update to ingo-library (vimscript #4433) version 1.043! ***
 
 2.11	09-Jun-2019
@@ -343,7 +355,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2020 Ingo Karkat
+Copyright: (C) 2012-2022 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>

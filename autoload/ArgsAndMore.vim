@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2019 Ingo Karkat
+" Copyright: (C) 2012-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -13,9 +13,12 @@ set cpo&vim
 function! ArgsAndMore#AfterExecute()
     execute g:ArgsAndMore_AfterCommand
 endfunction
-function! s:Execute( command )
+function! s:Execute( command, postCommand )
     try
 	execute a:command
+	if ! empty(a:postCommand)
+	    execute a:postCommand
+	endif
     catch /^Vim\%((\a\+)\)\=:/
 	call ingo#msg#VimExceptionMsg()
     catch
@@ -25,20 +28,20 @@ function! s:Execute( command )
     call ArgsAndMore#AfterExecute()
 endfunction
 
-function! ArgsAndMore#Windo( range, command )
+function! ArgsAndMore#Windo( range, command, postCommand )
     " By entering a window, its height is potentially increased from 0 to 1 (the
     " minimum for the current window). To avoid any modification, save the window
     " sizes and restore them after visiting all windows.
     let l:originalWindowLayout = winrestcmd()
 	let l:originalWinNr = winnr()
 	let l:previousWinNr = winnr('#') ? winnr('#') : 1
-	    execute 'keepjumps' a:range 'windo call s:Execute(a:command)'
+	    execute 'keepjumps' a:range 'windo call s:Execute(a:command, a:postCommand)'
 	execute l:previousWinNr . 'wincmd w'
 	execute l:originalWinNr . 'wincmd w'
     silent! execute l:originalWindowLayout
 endfunction
 
-function! ArgsAndMore#Winbufdo( range, command )
+function! ArgsAndMore#Winbufdo( range, command, postCommand )
     let l:buffers = []
 
     " By entering a window, its height is potentially increased from 0 to 1 (the
@@ -51,7 +54,7 @@ function! ArgsAndMore#Winbufdo( range, command )
 	    execute 'keepjumps' a:range 'windo'
 	    \   'if index(l:buffers, bufnr('')) == -1 |'
 	    \       'call add(l:buffers, bufnr('')) |'
-	    \       'call s:Execute(a:command)'
+	    \       'call s:Execute(a:command, a:postCommand)'
 	    \   'endif'
 
 	execute l:previousWinNr . 'wincmd w'
@@ -59,15 +62,15 @@ function! ArgsAndMore#Winbufdo( range, command )
     silent! execute l:originalWindowLayout
 endfunction
 
-function! ArgsAndMore#Tabdo( range, command )
+function! ArgsAndMore#Tabdo( range, command, postCommand )
     let l:originalTabNr = tabpagenr()
-	execute 'keepjumps' a:range 'tabdo call s:Execute(a:command)'
+	execute 'keepjumps' a:range 'tabdo call s:Execute(a:command, a:postCommand)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 
-function! ArgsAndMore#Tabwindo( range, command )
+function! ArgsAndMore#Tabwindo( range, command, postCommand )
     let l:originalTabNr = tabpagenr()
-	execute 'keepjumps' a:range 'tabdo call ArgsAndMore#Windo("", a:command)'
+	execute 'keepjumps' a:range 'tabdo call ArgsAndMore#Windo("", a:command, a:postCommand)'
     execute l:originalTabNr . 'tabnext'
 endfunction
 

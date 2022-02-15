@@ -38,22 +38,32 @@ USAGE
                             Any encountered errors are also put into the
                             quickfix list.
 
-    :[range]BufdoWrite[!] {cmd}
+    :[range]BufdoWrite {cmd}
                             Execute {cmd} in each buffer in the buffer list and
                             automatically persist any changes (:update).
 
     :[range]Windo {cmd}     Execute {cmd} in each window, then return back to the
                             original one.
+    :[range]WindoWrite {cmd}
+                            Execute {cmd} in each window and automatically persist
+                            any changes (:update).
 
     :[range]Winbufdo {cmd}  Execute {cmd} in each different buffer shown in one of
                             the windows in the current tab page (once per buffer),
                             then return back to the original one.
+    :[range]WinbufdoWrite {cmd}
+                            Execute {cmd} in each different buffer shown in one of
+                            the windows in the current tab page (once per buffer)
+                            and automatically persist any changes (:update).
 
     :[range]Tabdo {cmd}     Execute {cmd} once in each tab page, then return back
                             to the original one.
 
     :[range]Tabwindo {cmd}  Execute {cmd} in each open window on each tab page,
                             then return back to the original one.
+    :[range]TabwindoWrite {cmd}
+                            Execute {cmd} in each open window on each tab page,
+                            and automatically persist any changes (:update).
 
     :[range]Argdo[!] {cmd}  Execute {cmd} for each file in the argument list, then
                             return back to the original file and argument.
@@ -223,6 +233,8 @@ HISTORY
   files that have been created and saved (without !).
 - FIX: :ArgsNegated does not handle arguments with escaped spaces and
   cmdline-special characters (e.g. #).
+- Add :WindoWrite, :WinbufdoWrite, :TabwindoWrite variants that automatically
+  persist any changes (like :ArgdoWrite).
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.043!__
 
@@ -328,7 +340,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2020 Ingo Karkat -
+Copyright: (C) 2012-2022 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
