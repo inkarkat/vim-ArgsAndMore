@@ -147,7 +147,7 @@ function! s:ArgOrBufExecute( Predicate, command, postCommand, isEnableSyntax, ..
 
     return l:isSuccess
 endfunction
-function! ArgsAndMore#Iteration#Argdo( bang, Predicate, range, command, postCommand )
+function! ArgsAndMore#Iteration#Argdo( bang, range, Predicate, command, postCommand )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     " Temporarily turn off 'more', as this interferes with the "automated batch
