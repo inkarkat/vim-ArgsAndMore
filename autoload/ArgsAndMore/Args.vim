@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2020 Ingo Karkat
+" Copyright: (C) 2015-2023 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -216,6 +216,28 @@ function! ArgsAndMore#Args#QuickfixToArgs( list, isArgAdd, count, bang )
     endif
 endfunction
 
+
+function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
+    if a:endArg == 0
+	call ingo#err#Set('No arguments')
+	return 0
+    endif
+
+    let l:sortedFilespecs = sort(
+    \   map(
+    \       argv()[a:startArg - 1 : a:endArg - 1],
+    \       "fnamemodify(v:val, ':p')"
+    \   ), a:how
+    \)
+    if a:isReverse
+	let l:sortedFilespecs = reverse(l:sortedFilespecs)
+    endif
+
+    silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
+    call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+    echo printf('%d file%s sorted', len(l:sortedFilespecs), (len(l:sortedFilespecs) == 1 ? '' : 's'))
+    return 1
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

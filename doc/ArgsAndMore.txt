@@ -143,7 +143,10 @@ USAGE							   *ArgsAndMore-usage*
 			For example, remove all arguments whose buffers have
 			more than 100 lines: >
 			    :ArgsFilterDo line('$') <= 100
-<								*:ArgsNegated*
+:[range]ArgsSort[!] [f][i][l][n][N]|{func-name}			   *:ArgsSort*
+			Sort the argument list. [!] reverses the order; all
+			other arguments like |sort()|.
+								*:ArgsNegated*
 :ArgsNegated[!] {arglist}
 			Define all files except {arglist} as the new argument
 			list and edit the first one.
@@ -265,6 +268,7 @@ HISTORY							 *ArgsAndMore-history*
 - Only iterate over modifiable buffers in the :*Write commands; skip buffers
   where 'modifiable' is unset (e.g. terminal buffers), to avoid errors on
   attempted modification and :update.
+- ENH: Add :ArgsSort command.
   *** You need to update to ingo-library (vimscript #4433) version 1.043! ***
 
 2.11	09-Jun-2019
@@ -361,7 +365,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2022 Ingo Karkat
+Copyright: (C) 2012-2023 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
