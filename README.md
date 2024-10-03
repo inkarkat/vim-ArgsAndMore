@@ -19,8 +19,11 @@ processed arguments have been removed.
 - The :ArgsNegated command was inspired by the following Stack Overflow
   question:
     http://stackoverflow.com/questions/11547662/how-can-i-negate-a-glob-in-vim
-- The https://github.com/nelstrom/vim-qargs plugin has a :Qargs command
+- vim-qargs (https://github.com/nelstrom/vim-qargs) has a :Qargs command
   similar (but more simplistic) than :CListToArgs.
+- vim-lister (https://github.com/tommcdo/vim-lister) also has (among others)
+  :Qargs and :Largs commands, and an :Afilter equivalent of :ArgsFilter (that
+  takes a pattern instead of an expression, though).
 - Pretty Args ([vimscript #4681](http://www.vim.org/scripts/script.php?script_id=4681)) provides an :Arg command which takes
   filename-modifiers to print a shortened argument list, e.g. just the
   filenames.
@@ -35,22 +38,34 @@ USAGE
                             Any encountered errors are also put into the
                             quickfix list.
 
-    :[range]BufdoWrite[!] {cmd}
-                            Execute {cmd} in each buffer in the buffer list and
-                            automatically persist any changes (:update).
+    :[range]BufdoWrite {cmd}
+                            Execute {cmd} in each modifiable buffer in the buffer
+                            list and automatically persist any changes (:update).
 
     :[range]Windo {cmd}     Execute {cmd} in each window, then return back to the
                             original one.
+    :[range]WindoWrite {cmd}
+                            Execute {cmd} in each window showing a modifiable
+                            buffer and automatically persist any changes (:update).
 
     :[range]Winbufdo {cmd}  Execute {cmd} in each different buffer shown in one of
                             the windows in the current tab page (once per buffer),
                             then return back to the original one.
+    :[range]WinbufdoWrite {cmd}
+                            Execute {cmd} in each different modifiable buffer
+                            shown in one of the windows in the current tab page
+                            (once per buffer) and automatically persist any
+                            changes (:update).
 
     :[range]Tabdo {cmd}     Execute {cmd} once in each tab page, then return back
                             to the original one.
 
     :[range]Tabwindo {cmd}  Execute {cmd} in each open window on each tab page,
                             then return back to the original one.
+    :[range]TabwindoWrite {cmd}
+                            Execute {cmd} in each open window on each tab page,
+                            that shows a modifiable buffer and automatically
+                            persist any changes (:update).
 
     :[range]Argdo[!] {cmd}  Execute {cmd} for each file in the argument list, then
                             return back to the original file and argument.
@@ -67,8 +82,9 @@ USAGE
                             quickfix list.
 
     :[range]ArgdoWrite[!] {cmd}
-                            Execute {cmd} in each buffer in the argument list and
-                            automatically persist any changes (:update).
+                            Execute {cmd} in each modifiable buffer in the
+                            argument list and automatically persist any changes
+                            (:update).
     :[range]ArgdoConfirmWrite[!] {cmd}
                             Like :ArgdoWrite, but confirm each write, allowing
                             to review the automatically applied changes of {cmd}
@@ -85,11 +101,24 @@ USAGE
                             didn't cause any error messages during the last
                             :Argdo command.
 
+    :[N]ArgDrop[!] [N]      Delete the current [N] argument(s) from the argument
+                            list and edit the next one instead. Complains when the
+                            current file is not contained in the argument list
+                            unless [!] is given (which is also required to
+                            abandon changes in the current buffer).
+
+    :[range]ArgsDeleteExisting[!]
+                            Delete any files from the argument list that do (with
+                            [!]: not) exist in the file system (actually: can[not]
+                            be read).
+
     :[range]ArgsFilter {expr}
-                            Apply the filter() of {expr} to the argument list,
-                            and keep only those where {expr} yields true. This
-                            allows you to :argdelete multiple arguments at once
-                            and to delete without specifying the full filename.
+                            Apply the filter() of {expr} to the files in the
+                            argument list (i.e. values from argv(), referenced
+                            as v:val), and keep only those where {expr} yields
+                            true. This allows you to :argdelete multiple
+                            arguments at once and to delete without specifying the
+                            full filename.
 
     :[range]ArgsFilterDo[!] {expr}
                             Apply the filter() of {expr} to the argument list
@@ -100,6 +129,9 @@ USAGE
                             For example, remove all arguments whose buffers have
                             more than 100 lines:
                                 :ArgsFilterDo line('$') <= 100
+    :[range]ArgsSort[!] [f][i][l][n][N]|{func-name}
+                            Sort the argument list. [!] reverses the order; all
+                            other arguments like sort().
 
     :ArgsNegated[!] {arglist}
                             Define all files except {arglist} as the new argument
@@ -168,7 +200,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.035 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
   higher.
 
 CONFIGURATION
@@ -199,6 +231,22 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 2.20    03-Oct-2024
+- Add :ArgDrop command.
+- Add :ArgsDeleteExisting specialization of :ArgsFilter. Useful to throw out
+  files that have been removed from the file system (with !), or to drop
+  files that have been created and saved (without !).
+- FIX: :ArgsNegated does not handle arguments with escaped spaces and
+  cmdline-special characters (e.g. #).
+- Add :WindoWrite, :WinbufdoWrite, :TabwindoWrite variants that automatically
+  persist any changes (like :ArgdoWrite).
+- Only iterate over modifiable buffers in the :\*Write commands; skip buffers
+  where 'modifiable' is unset (e.g. terminal buffers), to avoid errors on
+  attempted modification and :update.
+- ENH: Add :ArgsSort command.
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.043!__
 
 ##### 2.11    09-Jun-2019
 - Support [range] on :ArgsFilter.
@@ -302,7 +350,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2019 Ingo Karkat -
+Copyright: (C) 2012-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;

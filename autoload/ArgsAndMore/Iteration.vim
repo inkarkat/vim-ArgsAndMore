@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2019 Ingo Karkat
+" Copyright: (C) 2015-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -72,9 +72,9 @@ function! s:SetQuickfix( command, entries )
 	return
     endif
 
-    silent call ingo#event#Trigger('QuickFixCmdPre ' . a:command)   " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPre(1, a:command)
 	call setqflist(a:entries)
-    silent call ingo#event#Trigger('QuickFixCmdPost ' . a:command)  " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPost(1, a:command)
 endfunction
 function! s:ErrorsToQuickfix( command )
     call s:SetQuickfix(a:command, map(copy(s:errors), 's:ErrorToQuickfixEntry(v:val)'))
@@ -105,7 +105,7 @@ function! s:EnableSyntaxHighlightingForInteractiveCommands( command )
 	endtry
     endif
 endfunction
-function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax, ... )
+function! s:ArgOrBufExecute( Predicate, command, postCommand, isEnableSyntax, ... )
     if a:isEnableSyntax
 	call s:EnableSyntaxHighlightingForInteractiveCommands(a:command)
     endif
@@ -113,6 +113,10 @@ function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax, ... )
     let l:isSuccess = 1
 
     try
+	if ! empty(a:Predicate) && ! ingo#actions#EvaluateWithValOrFunc(a:Predicate)
+	    return l:isSuccess
+	endif
+
 	let v:errmsg = ''
 	execute a:command
 	if ! empty(v:errmsg)
@@ -143,7 +147,7 @@ function! s:ArgOrBufExecute( command, postCommand, isEnableSyntax, ... )
 
     return l:isSuccess
 endfunction
-function! ArgsAndMore#Iteration#Argdo( bang, range, command, postCommand )
+function! ArgsAndMore#Iteration#Argdo( bang, range, Predicate, command, postCommand )
     let l:restoreCommand = s:ArgumentListRestoreCommand()
 
     " Temporarily turn off 'more', as this interferes with the "automated batch
@@ -169,7 +173,7 @@ function! ArgsAndMore#Iteration#Argdo( bang, range, command, postCommand )
 	" iteration will be aborted. (We can't use :silent! because we want to
 	" see the error message.)
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute a:range . 'argdo' . a:bang 'call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute a:range . 'argdo' . a:bang 'call s:ArgOrBufExecute(a:Predicate, a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -200,7 +204,7 @@ function! ArgsAndMore#Iteration#Argdo( bang, range, command, postCommand )
     return (len(s:errors) == 0)
 endfunction
 if v:version < 704 || v:version == 704 && ! has('patch542')
-function! s:ArgIterate( bang, startArg, endArg, command, postCommand )
+function! s:ArgIterate( bang, startArg, endArg, Predicate, command, postCommand )
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
     let l:restoreCommand = s:ArgumentListRestoreCommand()
@@ -237,7 +241,7 @@ function! s:ArgIterate( bang, startArg, endArg, command, postCommand )
 		echo l:nextArgumentOutput
 	    endif
 
-	    call s:ArgOrBufExecute(a:command, a:postCommand, 0)  " Without :argdo, we control the syntax suppression; no need to enable syntax during iteration.
+	    call s:ArgOrBufExecute(a:Predicate, a:command, a:postCommand, 0)  " Without :argdo, we control the syntax suppression; no need to enable syntax during iteration.
 	endfor
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [argidx(), bufnr(''), ingo#msg#MsgFromVimException()])
@@ -294,7 +298,7 @@ function! s:InterpretRange( rangeExpr )
 	return []
     endtry
 endfunction
-function! ArgsAndMore#Iteration#ArgdoWrapper( bang, isNoRangeGiven, command, postCommand )
+function! ArgsAndMore#Iteration#ArgdoWrapper( bang, isNoRangeGiven, Predicate, command, postCommand )
     if a:isNoRangeGiven
 	return ArgsAndMore#Iteration#Argdo(a:bang, '', a:command, a:postCommand)
     else
@@ -303,7 +307,7 @@ function! ArgsAndMore#Iteration#ArgdoWrapper( bang, isNoRangeGiven, command, pos
 	    if empty(l:range) | throw 'Invalid range' | endif
 	    let l:limits = s:InterpretRange(l:range)
 	    if len(l:limits) != 2 || l:limits[0] > l:limits[1] | throw 'Invalid range' | endif
-	    return s:ArgIterate(a:bang, l:limits[0], l:limits[1], a:command, a:postCommand)
+	    return s:ArgIterate(a:bang, l:limits[0], l:limits[1], a:Predicate, a:command, a:postCommand)
 	catch
 	    call ingo#err#Set('Invalid range' . (empty(l:range) ? '' : ': ' . l:range))
 	    return 0
@@ -354,7 +358,7 @@ function! ArgsAndMore#Iteration#ArgdoDeleteSuccessful()
     echo printf('Deleted %d successfully processed from %d arguments', (l:originalArgNum - len(l:argIdxDict)), l:originalArgNum)
 endfunction
 
-function! ArgsAndMore#Iteration#Bufdo( bang, range, command, postCommand )
+function! ArgsAndMore#Iteration#Bufdo( bang, range, Predicate, command, postCommand )
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
     let l:restoreCommand = s:BufferListRestoreCommand()
@@ -369,7 +373,7 @@ function! ArgsAndMore#Iteration#Bufdo( bang, range, command, postCommand )
     " the command modified, but didn't update the buffer).
     try
 	let l:isEnableSyntax = s:IsInteractiveCommand(a:command)
-	execute 'keepjumps' a:range 'bufdo' . a:bang 'call s:ArgOrBufExecute(a:command, a:postCommand, l:isEnableSyntax)'
+	execute 'keepjumps' a:range 'bufdo' . a:bang 'call s:ArgOrBufExecute(a:Predicate, a:command, a:postCommand, l:isEnableSyntax)'
     catch /^Vim\%((\a\+)\)\=:/
 	call add(s:errors, [-1, bufnr(''), ingo#msg#MsgFromVimException()])
 	call ingo#msg#VimExceptionMsg()
@@ -394,8 +398,9 @@ endfunction
 
 
 
-function! s:GetCurrentQuickfixCnt( isLocationList )
-    let l:currentEntryCommand = (a:isLocationList ? 'll' : 'cc')
+function! s:GetCurrentQuickfixCnt( quickfixType )
+    let l:quickfixTypePrefix = ingo#window#quickfix#GetPrefix(a:quickfixType)
+    let l:currentEntryCommand = l:quickfixTypePrefix . l:quickfixTypePrefix
 
     " The :cc command will echo something like "(3 of 42): ..." when the
     " quickfix window isn't open.
@@ -411,7 +416,7 @@ function! s:GetCurrentQuickfixCnt( isLocationList )
 
     " Else, the quickfix window must be open, so we have to go there and read
     " off the current line.
-    let l:openCommand = (a:isLocationList ? 'l' : 'c') . 'open'
+    let l:openCommand = l:quickfixTypePrefix . 'open'
 
     let l:originalWinNr = winnr()
     let l:previousWinNr = winnr('#') ? winnr('#') : 1
@@ -429,21 +434,18 @@ function! s:Get( list, idx, default )
     let l:entry = get(a:list, a:idx, a:default)
     return (empty(l:entry) ? a:default : l:entry)
 endfunction
-function! s:GetQuickfixList( isLocationList )
-    return (a:isLocationList ? getloclist(0) : getqflist())
-endfunction
-function! s:GetQuickfixEntry( isLocationList, quickfixIdx )
-    return get(s:GetQuickfixList(a:isLocationList), a:quickfixIdx, {})
+function! s:GetQuickfixEntry( quickfixType, quickfixIdx )
+    return get(ingo#window#quickfix#GetOtherList(a:quickfixType), a:quickfixIdx, {})
 endfunction
 function! s:ConsumeErrors( consumedErrorsCnt )
     let l:consumedErrors = s:errors[ a:consumedErrorsCnt : ]
     let l:consumedErrorsCnt = len(s:errors)
     return [l:consumedErrorsCnt, map(l:consumedErrors, 's:ErrorToQuickfixEntry(v:val)')]
 endfunction
-function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrorsCnt )
+function! s:DetermineSkippedEntries( quickfixType, quickfixIdx, consumedErrorsCnt )
     let l:bufNr = bufnr('')
     let l:idx = a:quickfixIdx
-    let l:list = s:GetQuickfixList(a:isLocationList)
+    let l:list = ingo#window#quickfix#GetOtherList(a:quickfixType)
     if l:list[l:idx].bufnr != l:bufNr
 	call ingo#msg#WarningMsg(printf('Cannot associate buffer %d with entry %d; some entries may get lost.', l:bufNr, a:quickfixIdx))
 	return [a:quickfixIdx, 0, []]
@@ -457,8 +459,8 @@ function! s:DetermineSkippedEntries( isLocationList, quickfixIdx, consumedErrors
     let [l:consumedErrorsCnt, l:consumedErrors] = s:ConsumeErrors(a:consumedErrorsCnt)
     return [l:idx, l:consumedErrorsCnt, l:consumedErrors + l:list[ a:quickfixIdx : l:idx ]]
 endfunction
-function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
-    let l:qfEntry = s:GetQuickfixEntry(a:isLocationList, a:quickfixIdx)
+function! s:JoinErrorWithQuickfix( quickfixType, errorMessage, quickfixIdx )
+    let l:qfEntry = s:GetQuickfixEntry(a:quickfixType, a:quickfixIdx)
     let l:qfText = get(l:qfEntry, 'text', '')
     let l:qfCol = (empty(l:qfEntry) ? 0 : ingo#window#quickfix#TranslateVirtualColToByteCount(l:qfEntry))
     return [
@@ -470,7 +472,8 @@ function! s:JoinErrorWithQuickfix( isLocationList, errorMessage, quickfixIdx )
     \]
 endfunction
 function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand, startBufNr, endBufNr, command, postCommand )
-    let l:prefix = (a:isLocationList ? 'l' : 'c')
+    let l:quickfixType = (a:isLocationList ? 2 : 1)
+    let l:quickfixTypePrefix = ingo#window#quickfix#GetPrefix(l:quickfixType)
 
     " Structure here like in ArgsAndMore#Iteration#Argdo().
 
@@ -484,7 +487,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	" target beforehand, just restore the original buffer (via the alternate
 	" file), and go back to the quickfix window. This means that we're
 	" losing the buffer's alternate file.
-	let l:restoreCommand = s:JoinCommands(['buffer #', l:prefix . 'open'])
+	let l:restoreCommand = s:JoinCommands(['buffer #', l:quickfixTypePrefix . 'open'])
     else
 	let l:restoreCommand = s:BufferListRestoreCommand()
     endif
@@ -508,15 +511,15 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     let l:consumedErrorsCnt = 0
 
     let l:hasRange = (! empty(a:startBufNr) && ! empty(a:endBufNr))
-    let l:firstIteration = l:prefix . 'first'
-    let l:nextFileIteration = l:prefix . 'nfile'
-    let l:nextIteration = l:prefix . (a:isFiles ? 'nfile' : 'next')
+    let l:firstIteration = l:quickfixTypePrefix . 'first'
+    let l:nextFileIteration = l:quickfixTypePrefix . 'nfile'
+    let l:nextIteration = l:quickfixTypePrefix . (a:isFiles ? 'nfile' : 'next')
     let l:iterationCommand = l:firstIteration
     let l:originalEntryCommand = ''
     try
-	let l:originalCnt = s:GetCurrentQuickfixCnt(a:isLocationList)
+	let l:originalCnt = s:GetCurrentQuickfixCnt(l:quickfixType)
 	if l:originalCnt != -1
-	    let l:originalEntryCommand = s:JoinCommands([l:originalCnt . l:prefix . l:prefix])
+	    let l:originalEntryCommand = s:JoinCommands([l:originalCnt . l:quickfixTypePrefix . l:quickfixTypePrefix])
 	endif
 
 	while 1
@@ -545,7 +548,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 		" counter doesn't properly track the quickfix list any more.
 		" Find out how many entries have been skipped (and store those
 		" for a fix command).
-		let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(a:isLocationList, l:idx, l:consumedErrorsCnt)
+		let [l:idx, l:consumedErrorsCnt, l:newEntries] = s:DetermineSkippedEntries(l:quickfixType, l:idx, l:consumedErrorsCnt)
 		let l:entries += l:newEntries
 		continue
 	    endif
@@ -562,18 +565,18 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
 	    endif
 
 	    let l:changedtick = b:changedtick
-	    let l:isSuccess = s:ArgOrBufExecute(a:command, a:postCommand, 0, -1)
+	    let l:isSuccess = s:ArgOrBufExecute('', a:command, a:postCommand, 0, -1)
 	    if l:isSuccess
 		if ! empty(a:fixCommand) && b:changedtick == l:changedtick
 		    " No change means the attempted fix failed.
-		    call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, 'Attempted fix failed', l:idx))
+		    call add(s:errors, s:JoinErrorWithQuickfix(l:quickfixType, 'Attempted fix failed', l:idx))
 		    call ingo#msg#ErrorMsg('Attempted fix failed')
 		endif
 	    else
 		" s:ArgOrBufExecute() has already captured the actual error;
 		" append the text from the quickfix entry now to complete the
 		" picture.
-		let l:qfText = get(s:GetQuickfixEntry(a:isLocationList, l:idx), 'text', '')
+		let l:qfText = get(s:GetQuickfixEntry(l:quickfixType, l:idx), 'text', '')
 		if ! empty(l:qfText)
 		    let s:errors[-1][2] .= ' on: ' . l:qfText
 		endif
@@ -589,7 +592,7 @@ function! ArgsAndMore#Iteration#QuickfixDo( isLocationList, isFiles, fixCommand,
     catch /^Vim\%((\a\+)\)\=:E553:/ " E553: No more items
 	" This is the expected end of iteration.
     catch /^Vim\%((\a\+)\)\=:/
-	call add(s:errors, s:JoinErrorWithQuickfix(a:isLocationList, ingo#msg#MsgFromVimException(), l:idx))
+	call add(s:errors, s:JoinErrorWithQuickfix(l:quickfixType, ingo#msg#MsgFromVimException(), l:idx))
 	call ingo#msg#VimExceptionMsg()
     catch /^ArgsAndMore: Aborted/
 	" This internal exception is thrown to stop the iteration through the

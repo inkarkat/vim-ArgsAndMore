@@ -3,8 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-"
-" Copyright: (C) 2015-2019 Ingo Karkat
+" Copyright: (C) 2015-2023 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -89,7 +88,10 @@ function! ArgsAndMore#Args#Negated( bang, filePatternsString )
 	" "../other/path" to a path relative to the CWD "/real/other/path".
 	call ingo#workingdir#Chdir(getcwd())
 
-	execute 'argdelete' join(l:argNegationGlobs)
+	# We must not fnameescape() for :argdelete, as globs have to be kept
+	# unescaped. However, spaces and cmdline-special characters have to be
+	# escaped.
+	execute 'argdelete' join(map(l:argNegationGlobs, 'ingo#escape#file#CmdlineSpecialEscape(escape(v:val, " "))'))
 	execute 'first' . a:bang
     catch /^Vim\%((\a\+)\)\=:/
 	call ingo#msg#VimExceptionMsg()
@@ -135,12 +137,12 @@ endfunction
 
 
 function! ArgsAndMore#Args#ToQuickfix( startArg, endArg )
-    silent call ingo#event#Trigger('QuickFixCmdPre args') | " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPre(1, 'args')
 	call setqflist(map(
 	\   argv()[a:startArg - 1 : a:endArg - 1],
 	\   "{'filename': v:val, 'lnum': 1}"
 	\))
-    silent call ingo#event#Trigger('QuickFixCmdPost args') | " Allow hooking into the quickfix update.
+    call ingo#window#quickfix#CmdPost(1, 'args')
 endfunction
 
 
@@ -214,6 +216,28 @@ function! ArgsAndMore#Args#QuickfixToArgs( list, isArgAdd, count, bang )
     endif
 endfunction
 
+
+function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
+    if a:endArg == 0
+	call ingo#err#Set('No arguments')
+	return 0
+    endif
+
+    let l:sortedFilespecs = sort(
+    \   map(
+    \       argv()[a:startArg - 1 : a:endArg - 1],
+    \       "fnamemodify(v:val, ':p')"
+    \   ), a:how
+    \)
+    if a:isReverse
+	let l:sortedFilespecs = reverse(l:sortedFilespecs)
+    endif
+
+    silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
+    call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+    echo printf('%d file%s sorted', len(l:sortedFilespecs), (len(l:sortedFilespecs) == 1 ? '' : 's'))
+    return 1
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
