@@ -232,7 +232,7 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.20    RELEASEME
+##### 2.20    03-Oct-2024
 - Add :ArgDrop command.
 - Add :ArgsDeleteExisting specialization of :ArgsFilter. Useful to throw out
   files that have been removed from the file system (with !), or to drop
@@ -350,7 +350,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2023 Ingo Karkat -
+Copyright: (C) 2012-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
