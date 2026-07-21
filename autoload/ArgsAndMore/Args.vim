@@ -100,7 +100,7 @@ endfunction
 
 
 
-function! s:List( files, currentIdx, isBang, fileglob )
+function! s:List( files, startCnt, currentIdx, isBang, fileglob )
     let l:isFullPath = (! empty(a:fileglob) || a:isBang)
     if ! empty(a:fileglob)
 	let l:pattern = ingo#regexp#fromwildcard#AnchoredToPathBoundaries(a:fileglob)
@@ -116,6 +116,19 @@ function! s:List( files, currentIdx, isBang, fileglob )
 	    continue
 	endif
 
+	let l:bufnr = bufnr(l:filespec)
+	if l:bufnr == -1
+	    let l:sigil = '?'
+	elseif getbufvar(l:bufnr, '&modified')
+	    let l:sigil = '+'
+	elseif ! getbufvar(l:bufnr, '&modifiable')
+	    let l:sigil = '-'
+	elseif getbufvar(l:bufnr, '&readonly')
+	    let l:sigil = '='
+	else
+	    let l:sigil = ''
+	endif
+
 	if ! l:hasPrintedTitle
 	    let l:hasPrintedTitle = 1
 
@@ -123,12 +136,13 @@ function! s:List( files, currentIdx, isBang, fileglob )
 	    echo '   cnt	file'
 	    echohl None
 	endif
-	echo (l:fileIdx == a:currentIdx ? '*' : ' ') . printf('%3d', l:fileIdx + 1) . "\t" . l:filespec
+	echo printf("%1s%3d%3s\t%s", (l:fileIdx == a:currentIdx ? '*' : ''), a:startCnt + l:fileIdx, l:sigil, l:filespec)
     endfor
 endfunction
 function! ArgsAndMore#Args#List( startArg, endArg, isBang, fileglob )
     call s:List(
     \   argv()[a:startArg - 1 : a:endArg - 1],
+    \   a:startArg,
     \   argidx() - a:startArg + 1,
     \   a:isBang,
     \   a:fileglob
@@ -167,7 +181,7 @@ function! s:GetQuickfixFilespecs( list, existingFilespecs )
     return [len(l:addedBufnrs), l:filespecs]
 endfunction
 function! ArgsAndMore#Args#QuickfixList( list, isBang, fileglob )
-    call s:List(s:GetQuickfixFilespecs(a:list, [])[1], -1, a:isBang, a:fileglob)
+    call s:List(s:GetQuickfixFilespecs(a:list, [])[1], 1, -1, a:isBang, a:fileglob)
 endfunction
 
 function! s:ExecuteWithoutWildignore( excommand, filespecs )
