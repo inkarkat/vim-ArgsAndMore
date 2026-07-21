@@ -123,7 +123,7 @@ function! s:List( files, startCnt, currentIdx, isBang, fileglob )
 	    echo '   cnt	file'
 	    echohl None
 	endif
-	echo (l:fileIdx == a:currentIdx ? '*' : ' ') . printf('%3d', a:startCnt + l:fileIdx) . "\t" . l:filespec
+	echo printf("%1s%3d\t%s", (l:fileIdx == a:currentIdx ? '*' : ''), a:startCnt + l:fileIdx, l:filespec)
     endfor
 endfunction
 function! ArgsAndMore#Args#List( startArg, endArg, isBang, fileglob )
