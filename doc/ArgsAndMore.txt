@@ -163,6 +163,9 @@ USAGE							   *ArgsAndMore-usage*
 			List each argument number and filespec that matches
 			(with [!]: does not match) {glob} in a neat list.
 			Matching and printing is done to the full filespec.
+								  *<Leader>la*
+[count]<Leader>la	List each / the next [count] argument[s] (both number
+			and filespec) in a neat list.
 
 							     *:ArgsToQuickfix*
 :[range]ArgsToQuickfix	Show all arguments as a quickfix list.
@@ -244,6 +247,11 @@ commands and overrule the default syntax suppression then. By default, this
 applies to the |:substitute| command with the |:s_c| flag; you can adapt the
 |pattern| to match other commands, too: >
     let g:ArgsAndMore_InteractiveCommandPattern = '...'
+<							   *ArgsAndMore-remap*
+If you want to use different mappings, map your keys to the
+<Plug>(ArgsAndMore...) mapping targets _before_ sourcing the script
+(e.g. in your |vimrc|): >
+    nmap <Leader>la <Plug>(ArgsAndMoreList)
 <
 ==============================================================================
 LIMITATIONS					     *ArgsAndMore-limitations*
@@ -265,6 +273,7 @@ HISTORY							 *ArgsAndMore-history*
 2.30	RELEASEME
 - ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
   #0000) version 1.00 or higher.
+- ENH: Add <Leader>la command for :ArgsList.
 
 2.20	03-Oct-2024
 - Add :ArgDrop command.

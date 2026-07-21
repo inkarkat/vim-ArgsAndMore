@@ -149,6 +149,9 @@ USAGE
                             (with [!]: does not match) {glob} in a neat list.
                             Matching and printing is done to the full filespec.
 
+    [count]<Leader>la       List each / the next [count] argument[s] (both number
+                            and filespec) in a neat list.
+
     :[range]ArgsToQuickfix  Show all arguments as a quickfix list.
 
     :CListToArgs            Convert the files in the quickfix list to arguments.
@@ -229,6 +232,12 @@ pattern to match other commands, too:
 
     let g:ArgsAndMore_InteractiveCommandPattern = '...'
 
+If you want to use different mappings, map your keys to the
+&lt;Plug&gt;(ArgsAndMore...) mapping targets _before_ sourcing the script
+(e.g. in your vimrc):
+
+    nmap <Leader>la <Plug>(ArgsAndMoreList)
+
 CONTRIBUTING
 ------------------------------------------------------------------------------
 
@@ -241,6 +250,7 @@ HISTORY
 ##### 2.30    RELEASEME
 - ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
   #0000) version 1.00 or higher.
+- ENH: Add &lt;Leader&gt;la command for :ArgsList.
 
 ##### 2.20    03-Oct-2024
 - Add :ArgDrop command.

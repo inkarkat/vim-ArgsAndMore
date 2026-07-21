@@ -133,6 +133,14 @@ command!                        -nargs=1 -complete=command CDoFixEntry if ! Args
 command!                        -nargs=1 -complete=command LDoFixEntry if ! ArgsAndMore#Iteration#QuickfixDo(1, 0, 'LDoFixEntry', 0, 0, <q-args>, '') | echoerr ingo#err#Get() | endif
 endif
 
+
+"- mappings --------------------------------------------------------------------
+
+nnoremap <silent> <Plug>(ArgsAndMoreList) :ArgsList<CR>
+if ! hasmapto('<Plug>(ArgsAndMoreList)', 'n')
+    nmap <Leader>la <Plug>(ArgsAndMoreList)
+endif
+
 unlet! s:hasArgumentAddressing
 let &cpo = s:save_cpo
 unlet s:save_cpo
