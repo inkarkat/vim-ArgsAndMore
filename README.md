@@ -101,6 +101,13 @@ USAGE
                             didn't cause any error messages during the last
                             :Argdo command.
 
+    :[count]ArgMerge [{name} ...]
+                            Add the {name}s to the argument list, but only if they
+                            aren't yet contained in the argument list (:argadd
+                            doesn't check and requires a follow-up deduplication).
+                            When {name} is omitted add the current buffer name to
+                            the argument list.
+
     :[N]ArgDrop[!] [N]      Delete the current [N] argument(s) from the argument
                             list and edit the next one instead. Complains when the
                             current file is not contained in the argument list
@@ -256,6 +263,7 @@ HISTORY
 - UI: ENH: :ArgsList, :CList and :LList now also show the modification state
   of each buffer with little sigils: + / - / =.
 - ENH: :ArgsSort maintains the currently active argument.
+- ENH: Add :ArgMerge command.
 
 ##### 2.20    03-Oct-2024
 - Add :ArgDrop command.

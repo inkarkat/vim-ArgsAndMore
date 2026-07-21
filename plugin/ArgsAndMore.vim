@@ -77,6 +77,11 @@ endif
 command! -bar ArgdoErrors call ArgsAndMore#Iteration#ArgdoErrors()
 command! -bar ArgdoDeleteSuccessful call ArgsAndMore#Iteration#ArgdoDeleteSuccessful()
 
+if s:hasArgumentAddressing
+command! -addr=arguments -bar -range=-1 -nargs=* -complete=file ArgMerge if ! ArgsAndMore#Arg#Merge(<count> == -1 ? '' : <count>, <q-args>) | echoerr ingo#err#Get() | endif
+else
+command!                 -bar -range=-1 -nargs=* -complete=file ArgMerge if ! ArgsAndMore#Arg#Merge(<count> == -1 ? '' : <count>, <q-args>) | echoerr ingo#err#Get() | endif
+endif
 command! -bar -bang -count=1 ArgDrop if ! ArgsAndMore#Arg#Drop('<bang>', <count>) | echoerr ingo#err#Get() | endif
 
 silent! call VcsRoot#DoesNotExist()	" Execute a function to force autoload.
