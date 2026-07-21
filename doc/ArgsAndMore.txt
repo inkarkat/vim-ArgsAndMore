@@ -125,6 +125,10 @@ USAGE							   *ArgsAndMore-usage*
 			Delete any files from the argument list that do (with
 			[!]: not) exist in the file system (actually: can[not]
 			be read).
+						*:ArgsDeleteFilesFromThisRoot*
+:[range]ArgsDeleteFilesFromThisRoot[!]
+			Delete any files from the argument list that are (with
+			[!]: not) inside the current project root directory.
 								 *:ArgsFilter*
 :[range]ArgsFilter {expr}
 			Apply the |filter()| of {expr} to the files in the
@@ -218,6 +222,8 @@ DEPENDENCIES					    *ArgsAndMore-dependencies*
 - Requires Vim 7.0 or higher.
 - Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.043 or
   higher.
+- The :ArgsDeleteFilesFromThisRoot command requires the |VcsRoot.vim| plugin
+  (vimscript #0000), version 1.00 or higher.
 
 ==============================================================================
 CONFIGURATION					   *ArgsAndMore-configuration*
@@ -255,6 +261,10 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
+
+2.30	RELEASEME
+- ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
+  #0000) version 1.00 or higher.
 
 2.20	03-Oct-2024
 - Add :ArgDrop command.
@@ -365,7 +375,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2024 Ingo Karkat
+Copyright: (C) 2012-2026 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>

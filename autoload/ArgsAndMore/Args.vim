@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2023 Ingo Karkat
+" Copyright: (C) 2015-2026 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -28,7 +28,7 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
 		execute (l:argIdx + a:startArg) . 'argdelete'
 	    endif
 	endfor
-    catch /^Vim\%((\a\+)\)\=:/
+    catch
 	call ingo#err#SetVimException()
 	return 0
     endtry

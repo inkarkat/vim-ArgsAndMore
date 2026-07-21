@@ -4,7 +4,7 @@
 "   - Requires Vim 7.0 or higher.
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2012-2023 Ingo Karkat
+" Copyright: (C) 2012-2026 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -79,14 +79,20 @@ command! -bar ArgdoDeleteSuccessful call ArgsAndMore#Iteration#ArgdoDeleteSucces
 
 command! -bar -bang -count=1 ArgDrop if ! ArgsAndMore#Arg#Drop('<bang>', <count>) | echoerr ingo#err#Get() | endif
 
-
+silent! call VcsRoot#DoesNotExist()	" Execute a function to force autoload.
 if s:hasArgumentAddressing
 command! -addr=arguments -bang -range=%                               ArgsDeleteExisting if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, '<bang>!filereadable(v:val)') | echoerr ingo#err#Get() | endif
+if exists('*VcsRoot#Root')
+command! -addr=arguments -bang -range=%                               ArgsDeleteFilesFromThisRoot if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, '<bang>!ArgsAndMore#Root#Filter(v:val)') | echoerr ingo#err#Get() | endif
+endif
 command! -addr=arguments       -range=% -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 command! -addr=arguments -bang -range=% -nargs=1 -complete=expression ArgsFilterDo if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterIterate', <q-bang>, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 command! -addr=arguments -bang -range=% -nargs=?                      ArgsSort     if ! ArgsAndMore#Args#Sort(<bang>0, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 else
 command!                 -bang -range=%                               ArgsDeleteExisting if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, '<bang>!filereadable(v:val)') | echoerr ingo#err#Get() | endif
+if exists('*VcsRoot#Root')
+command!                 -bang -range=%                               ArgsDeleteFilesFromThisRoot if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, '<bang>!ArgsAndMore#Root#Filter(v:val)') | echoerr ingo#err#Get() | endif
+endif
 command!                                -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
 command!                 -bang          -nargs=1 -complete=expression ArgsFilterDo if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterIterate', <q-bang>, 1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
 command!                 -bang -range=% -nargs=?                      ArgsSort     if ! ArgsAndMore#Args#Sort(<bang>0, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
