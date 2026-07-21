@@ -255,6 +255,7 @@ HISTORY
 - ENH: Add &lt;Leader&gt;la command for :ArgsList.
 - UI: ENH: :ArgsList, :CList and :LList now also show the modification state
   of each buffer with little sigils: + / - / =.
+- ENH: :ArgsSort maintains the currently active argument.
 
 ##### 2.20    03-Oct-2024
 - Add :ArgDrop command.

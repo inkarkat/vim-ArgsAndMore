@@ -237,6 +237,12 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
 	return 0
     endif
 
+    let l:currentArg = argidx() + 1
+    let l:currentArgAndFilespec = ''
+    if argidx() < argc() && l:currentArg >= a:startArg && l:currentArg <= a:endArg
+	let l:currentArgAndFilespec = fnamemodify(argv(argidx()), ':p')
+    endif
+
     let l:sortedFilespecs = sort(
     \   map(
     \       argv()[a:startArg - 1 : a:endArg - 1],
@@ -247,8 +253,30 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
 	let l:sortedFilespecs = reverse(l:sortedFilespecs)
     endif
 
-    silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
-    call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+    if empty(l:currentArgAndFilespec)
+	silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
+	call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+    else
+	" We need to replace "around" the current argument, so that it remains the
+	" current argument after sorting.
+	" (Simply relocating it and using :{N}argument to make it the current argument
+	" again would fail in case of unpersisted changes to the buffer.)
+	let l:currentArgSortedIdx = index(l:sortedFilespecs, l:currentArgAndFilespec)
+	if l:currentArgSortedIdx == -1 | throw 'ASSERT: Current filespec is found in sorted list' | endif
+
+	if l:currentArg < a:endArg
+	    silent execute printf('%d,%dargdelete', l:currentArg + 1, a:endArg)
+	    if l:currentArgSortedIdx < len(l:sortedFilespecs) - 1
+		call s:ExecuteWithoutWildignore(l:currentArg . 'argadd', l:sortedFilespecs[l:currentArgSortedIdx + 1 :])
+	    endif
+	endif
+	if l:currentArg > a:startArg
+	    silent execute printf('%d,%dargdelete', a:startArg, l:currentArg - 1)
+	    if l:currentArgSortedIdx > 0
+		call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs[0 : l:currentArgSortedIdx - 1])
+	    endif
+	endif
+    endif
     echo printf('%d file%s sorted', len(l:sortedFilespecs), (len(l:sortedFilespecs) == 1 ? '' : 's'))
     return 1
 endfunction
