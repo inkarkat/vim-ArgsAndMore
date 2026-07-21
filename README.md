@@ -141,16 +141,18 @@ USAGE
                             Define all files except {arglist} as the new argument
                             list and edit the first one.
 
-    :[range]ArgsList[!]     List each argument number and filespec in a neat list
-                            (not just one after the other as :args). With [!],
-                            expand all arguments to absolute filespecs.
+    :[range]ArgsList[!]     List each argument number, modification state, and
+                            filespec in a neat list (not just one after the other
+                            as :args). With [!], expand all arguments to
+                            absolute filespecs.
     :[range]ArgsList[!] {glob}
-                            List each argument number and filespec that matches
-                            (with [!]: does not match) {glob} in a neat list.
+                            List each argument number, modification state, and
+                            filespec that matches (with [!]: does not match)
+                            {glob} in a neat list.
                             Matching and printing is done to the full filespec.
 
-    [count]<Leader>la       List each / the next [count] argument[s] (both number
-                            and filespec) in a neat list.
+    [count]<Leader>la       List each / the next [count] argument[s] (number,
+                            modification state, and filespec) in a neat list.
 
     :[range]ArgsToQuickfix  Show all arguments as a quickfix list.
 
@@ -251,6 +253,8 @@ HISTORY
 - ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
   #0000) version 1.00 or higher.
 - ENH: Add &lt;Leader&gt;la command for :ArgsList.
+- UI: ENH: :ArgsList, :CList and :LList now also show the modification state
+  of each buffer with little sigils: + / - / =.
 
 ##### 2.20    03-Oct-2024
 - Add :ArgDrop command.

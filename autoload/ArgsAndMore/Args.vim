@@ -116,6 +116,19 @@ function! s:List( files, startCnt, currentIdx, isBang, fileglob )
 	    continue
 	endif
 
+	let l:bufnr = bufnr(l:filespec)
+	if l:bufnr == -1
+	    let l:sigil = '?'
+	elseif getbufvar(l:bufnr, '&modified')
+	    let l:sigil = '+'
+	elseif ! getbufvar(l:bufnr, '&modifiable')
+	    let l:sigil = '-'
+	elseif getbufvar(l:bufnr, '&readonly')
+	    let l:sigil = '='
+	else
+	    let l:sigil = ''
+	endif
+
 	if ! l:hasPrintedTitle
 	    let l:hasPrintedTitle = 1
 
@@ -123,7 +136,7 @@ function! s:List( files, startCnt, currentIdx, isBang, fileglob )
 	    echo '   cnt	file'
 	    echohl None
 	endif
-	echo printf("%1s%3d\t%s", (l:fileIdx == a:currentIdx ? '*' : ''), a:startCnt + l:fileIdx, l:filespec)
+	echo printf("%1s%3d%3s\t%s", (l:fileIdx == a:currentIdx ? '*' : ''), a:startCnt + l:fileIdx, l:sigil, l:filespec)
     endfor
 endfunction
 function! ArgsAndMore#Args#List( startArg, endArg, isBang, fileglob )
