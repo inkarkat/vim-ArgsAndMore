@@ -264,6 +264,7 @@ HISTORY
   of each buffer with little sigils: + / - / =.
 - ENH: :ArgsSort maintains the currently active argument.
 - ENH: Add :ArgMerge command.
+- BUG: :ArgsFilterDo fails with runtime error.
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.048!__
 
