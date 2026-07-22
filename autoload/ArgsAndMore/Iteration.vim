@@ -300,7 +300,7 @@ function! s:InterpretRange( rangeExpr )
 endfunction
 function! ArgsAndMore#Iteration#ArgdoWrapper( bang, isNoRangeGiven, Predicate, command, postCommand )
     if a:isNoRangeGiven
-	return ArgsAndMore#Iteration#Argdo(a:bang, '', a:command, a:postCommand)
+	return ArgsAndMore#Iteration#Argdo(a:bang, '', a:Predicate, a:command, a:postCommand)
     else
 	try
 	    let l:range = matchstr(histget('cmd', -1), '\C\%(^\||\)\s*\zs[^|]\+\ze\s*A\%[rgdo] ')
