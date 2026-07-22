@@ -216,7 +216,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.048 or
   higher.
 - The :ArgsDeleteFilesFromThisRoot command requires the VcsRoot.vim plugin
   (unreleased), version 1.00 or higher.
@@ -264,6 +264,8 @@ HISTORY
   of each buffer with little sigils: + / - / =.
 - ENH: :ArgsSort maintains the currently active argument.
 - ENH: Add :ArgMerge command.
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.048!__
 
 ##### 2.20    03-Oct-2024
 - Add :ArgDrop command.

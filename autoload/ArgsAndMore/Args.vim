@@ -184,31 +184,6 @@ function! ArgsAndMore#Args#QuickfixList( list, isBang, fileglob )
     call s:List(s:GetQuickfixFilespecs(a:list, [])[1], 1, -1, a:isBang, a:fileglob)
 endfunction
 
-function! s:ExecuteWithoutWildignore( excommand, filespecs )
-"*******************************************************************************
-"* PURPOSE:
-"   Executes a:excommand with all a:filespecs passed as arguments while
-"   'wildignore' is temporarily  disabled. This allows to introduce filespecs to
-"   the argument list (:args ..., :argadd ...) which would normally be filtered
-"   by 'wildignore'.
-"* ASSUMPTIONS / PRECONDITIONS:
-"	? List of any external variable, control, or other element whose state affects this procedure.
-"* EFFECTS / POSTCONDITIONS:
-"	? List of the procedure's effect on each external variable, control, or other element.
-"* INPUTS:
-"   a:excommand	    Ex command to be invoked
-"   a:filespecs	    List of filespecs.
-"* RETURN VALUES:
-"   none
-"*******************************************************************************
-    let l:save_wildignore = &wildignore
-    set wildignore=
-    try
-	execute a:excommand join(map(copy(a:filespecs), 'ingo#compat#fnameescape(v:val)'), ' ')
-    finally
-	let &wildignore = l:save_wildignore
-    endtry
-endfunction
 function! ArgsAndMore#Args#QuickfixToArgs( list, isArgAdd, count, bang )
     if empty(a:list)
 	call ingo#msg#ErrorMsg('No items')
@@ -225,7 +200,7 @@ function! ArgsAndMore#Args#QuickfixToArgs( list, isArgAdd, count, bang )
 	echo printf('No new arguments in %d unique item%s', l:quickfixBufferCnt, (l:quickfixBufferCnt == 1 ? '' : 's'))
     else
 	let l:command = (a:isArgAdd ? (a:count ? a:count : '') . 'argadd' : 'args' . a:bang)
-	call s:ExecuteWithoutWildignore(l:command, l:filespecs)
+	call ingo#wildignore#ExecuteWithout(l:command, l:filespecs)
 	echo printf('%d file%s%s: %s', len(l:filespecs), (len(l:filespecs) == 1 ? '' : 's'), (a:isArgAdd ? ' added' : ''), join(l:filespecs))
     endif
 endfunction
@@ -255,7 +230,7 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
 
     if empty(l:currentArgAndFilespec)
 	silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
-	call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+	call ingo#wildignore#ExecuteWithout((a:startArg - 1) . 'argadd', l:sortedFilespecs)
     else
 	" We need to replace "around" the current argument, so that it remains the
 	" current argument after sorting.
@@ -267,13 +242,13 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
 	if l:currentArg < a:endArg
 	    silent execute printf('%d,%dargdelete', l:currentArg + 1, a:endArg)
 	    if l:currentArgSortedIdx < len(l:sortedFilespecs) - 1
-		call s:ExecuteWithoutWildignore(l:currentArg . 'argadd', l:sortedFilespecs[l:currentArgSortedIdx + 1 :])
+		call ingo#wildignore#ExecuteWithout(l:currentArg . 'argadd', l:sortedFilespecs[l:currentArgSortedIdx + 1 :])
 	    endif
 	endif
 	if l:currentArg > a:startArg
 	    silent execute printf('%d,%dargdelete', a:startArg, l:currentArg - 1)
 	    if l:currentArgSortedIdx > 0
-		call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs[0 : l:currentArgSortedIdx - 1])
+		call ingo#wildignore#ExecuteWithout((a:startArg - 1) . 'argadd', l:sortedFilespecs[0 : l:currentArgSortedIdx - 1])
 	    endif
 	endif
     endif
