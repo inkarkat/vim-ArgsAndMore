@@ -140,6 +140,11 @@ USAGE
                             For example, remove all arguments whose buffers have
                             more than 100 lines:
                                 :ArgsFilterDo line('$') <= 100
+
+    :[range]ArgsFilterPattern[!] [{pattern}]
+                            Keeps (with [!]: drops) all arguments where {pattern}
+                            / the last search pattern matches in the buffer.
+
     :[range]ArgsSort[!] [f][i][l][n][N]|{func-name}
                             Sort the argument list. [!] reverses the order; all
                             other arguments like sort().
@@ -265,6 +270,7 @@ HISTORY
 - ENH: :ArgsSort maintains the currently active argument.
 - ENH: Add :ArgMerge command.
 - BUG: :ArgsFilterDo fails with runtime error.
+- ENH: Add :ArgsFilterPattern specialization of :ArgsFilterDo.
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.048!__
 

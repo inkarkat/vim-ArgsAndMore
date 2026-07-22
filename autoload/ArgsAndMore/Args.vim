@@ -28,6 +28,9 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
 		execute (l:argIdx + a:startArg) . 'argdelete'
 	    endif
 	endfor
+    catch /^ArgsAndMore:/
+	call ingo#err#SetCustomException('ArgsAndMore')
+	return 0
     catch
 	call ingo#err#SetVimException()
 	return 0
@@ -64,6 +67,17 @@ function! ArgsAndMore#Args#FilterArg( filterExpression )
 	call ingo#msg#VimExceptionMsg()
 	throw 'ArgsAndMore: Aborted'
     endtry
+endfunction
+function! ArgsAndMore#Args#FilterPattern( bang, startArg, endArg, pattern )
+    if empty(a:pattern)
+	if empty(@/)
+	    throw 'ArgsAndMore: No previous search pattern'
+	endif
+	let l:pattern = @/
+    else
+	let l:pattern = a:pattern
+    endif
+    return ArgsAndMore#Args#FilterIterate(a:bang, a:startArg, a:endArg, printf('ingo#search#IsBufferContains(%s)', string(l:pattern)))
 endfunction
 
 

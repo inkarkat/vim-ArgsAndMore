@@ -92,6 +92,7 @@ command! -addr=arguments -bang -range=%                               ArgsDelete
 endif
 command! -addr=arguments       -range=% -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 command! -addr=arguments -bang -range=% -nargs=1 -complete=expression ArgsFilterDo if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterIterate', <q-bang>, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command! -addr=arguments -bang -range=% -nargs=?                      ArgsFilterPattern if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterPattern', <q-bang>, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 command! -addr=arguments -bang -range=% -nargs=?                      ArgsSort     if ! ArgsAndMore#Args#Sort(<bang>0, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 else
 command!                 -bang -range=%                               ArgsDeleteExisting if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       <line1>, <line2>, '<bang>!filereadable(v:val)') | echoerr ingo#err#Get() | endif
@@ -100,6 +101,7 @@ command!                 -bang -range=%                               ArgsDelete
 endif
 command!                                -nargs=1 -complete=expression ArgsFilter   if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterDirect',  '',       1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
 command!                 -bang          -nargs=1 -complete=expression ArgsFilterDo if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterIterate', <q-bang>, 1, argc(), <q-args>) | echoerr ingo#err#Get() | endif
+command!                 -bang -range=% -nargs=?                      ArgsFilterPattern if ! ArgsAndMore#Args#Filter('ArgsAndMore#Args#FilterPattern', <q-bang>, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 command!                 -bang -range=% -nargs=?                      ArgsSort     if ! ArgsAndMore#Args#Sort(<bang>0, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 endif
 
