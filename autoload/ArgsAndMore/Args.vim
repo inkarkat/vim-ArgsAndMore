@@ -255,15 +255,15 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
 
 	if l:currentArg < a:endArg
 	    silent execute printf('%d,%dargdelete', l:currentArg + 1, a:endArg)
-	    if l:currentArgSortedIdx < len(l:sortedFilespecs) - 1
-		call ingo#wildignore#ExecuteWithout(l:currentArg . 'argadd', l:sortedFilespecs[l:currentArgSortedIdx + 1 :])
-	    endif
+	endif
+	if l:currentArgSortedIdx < len(l:sortedFilespecs) - 1
+	    call ingo#wildignore#ExecuteWithout(l:currentArg . 'argadd', l:sortedFilespecs[l:currentArgSortedIdx + 1 :])
 	endif
 	if l:currentArg > a:startArg
 	    silent execute printf('%d,%dargdelete', a:startArg, l:currentArg - 1)
-	    if l:currentArgSortedIdx > 0
-		call ingo#wildignore#ExecuteWithout((a:startArg - 1) . 'argadd', l:sortedFilespecs[0 : l:currentArgSortedIdx - 1])
-	    endif
+	endif
+	if l:currentArgSortedIdx > 0
+	    call ingo#wildignore#ExecuteWithout((a:startArg - 1) . 'argadd', l:sortedFilespecs[0 : l:currentArgSortedIdx - 1])
 	endif
     endif
     echo printf('%d file%s sorted', len(l:sortedFilespecs), (len(l:sortedFilespecs) == 1 ? '' : 's'))
