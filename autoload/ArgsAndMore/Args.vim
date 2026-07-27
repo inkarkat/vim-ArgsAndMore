@@ -89,7 +89,8 @@ function! ArgsAndMore#Args#FilterArg( filterExpression )
 	throw 'ArgsAndMore: Aborted'
     endtry
 endfunction
-function! ArgsAndMore#Args#KeepMatchingBuffers( bang, startArg, endArg, pattern )
+
+function! ArgsAndMore#Args#FilterMatchingBuffers( bang, startArg, endArg, isPatternInversion, pattern )
     if empty(a:pattern)
 	if empty(@/)
 	    throw 'ArgsAndMore: No previous search pattern'
@@ -98,18 +99,13 @@ function! ArgsAndMore#Args#KeepMatchingBuffers( bang, startArg, endArg, pattern 
     else
 	let l:pattern = a:pattern
     endif
-    return ArgsAndMore#Args#FilterIterate(a:bang, a:startArg, a:endArg, printf('ingo#search#IsBufferContains(%s)', string(l:pattern)))
+    return ArgsAndMore#Args#FilterIterate(a:bang, a:startArg, a:endArg, printf((a:isPatternInversion ? '!' : '') . 'ingo#search#IsBufferContains(%s)', string(l:pattern)))
+endfunction
+function! ArgsAndMore#Args#KeepMatchingBuffers( bang, startArg, endArg, pattern )
+    return ArgsAndMore#Args#FilterMatchingBuffers(a:bang, a:startArg, a:endArg, 0, a:pattern)
 endfunction
 function! ArgsAndMore#Args#DeleteMatchingBuffers( bang, startArg, endArg, pattern )
-    if empty(a:pattern)
-	if empty(@/)
-	    throw 'ArgsAndMore: No previous search pattern'
-	endif
-	let l:pattern = @/
-    else
-	let l:pattern = a:pattern
-    endif
-    return ArgsAndMore#Args#FilterIterate(a:bang, a:startArg, a:endArg, printf('! ingo#search#IsBufferContains(%s)', string(l:pattern)))
+    return ArgsAndMore#Args#FilterMatchingBuffers(a:bang, a:startArg, a:endArg, 1, a:pattern)
 endfunction
 
 
