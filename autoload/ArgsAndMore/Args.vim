@@ -16,6 +16,9 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
 	return 0
     endif
 
+    let l:currentArg = (argv(argidx()) ==# expand('%') ? argidx() + 1 : 0)
+    let l:potentialTargetArg = (a:endArg < argc() ? a:endArg + 1 : 0)    " If there are arguments beyond the range, the first of them is the first tentative target argument (if all arguments after the current buffer are deleted).
+    let l:targetArg = 0
     let l:deletedArgs = []
     try
 	let l:filteredArgs = call(a:FilterGenerator, [a:bang, a:startArg, a:endArg, a:filterExpression])
@@ -23,9 +26,18 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
 	for l:argIdx in range(len(l:filteredArgs) - 1, 0, -1)
-	    if ! l:filteredArgs[l:argIdx]
+	    if l:filteredArgs[l:argIdx]
+		let l:potentialTargetArg = l:argIdx + a:startArg " This argument remains and can become the new current argument if the current argument is deleted.
+	    else
 		call insert(l:deletedArgs, argv(l:argIdx), 0)
-		execute (l:argIdx + a:startArg) . 'argdelete'
+		let l:deleteArg = l:argIdx + a:startArg
+		execute l:deleteArg . 'argdelete'
+
+		let l:potentialTargetArg -= 1
+		let l:targetArg -= 1
+		if (l:deleteArg == l:currentArg)
+		    let l:targetArg = (l:potentialTargetArg > 0 ? l:potentialTargetArg : l:currentArg - 1)  " Use the next unfiltered following argument as the new current argument, or the previous argument if there is no following argument.
+		endif
 	    endif
 	endfor
     catch /^ArgsAndMore:/
@@ -41,6 +53,15 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
     else
 	let l:originalArgNum = a:endArg - a:startArg + 1
 	echo printf('Deleted %d of %d: %s', len(l:deletedArgs), l:originalArgNum, join(l:deletedArgs))
+
+	if l:targetArg > 0
+	    try
+		execute l:targetArg . 'argument' . a:bang
+	    catch /^Vim\%((\a\+)\)\=:/
+		call ingo#err#SetVimException()
+		return 0
+	    endtry
+	endif
     endif
     return 1
 endfunction

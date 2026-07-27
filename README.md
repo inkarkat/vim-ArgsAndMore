@@ -123,7 +123,7 @@ USAGE
                             Delete any files from the argument list that are (with
                             [!]: not) inside the current project root directory.
 
-    :[range]ArgsFilter {expr}
+    :[range]ArgsFilter[!] {expr}
                             Apply the filter() of {expr} to the files in the
                             argument list (i.e. values from argv(), referenced
                             as v:val), and keep only those where {expr} yields
@@ -272,6 +272,9 @@ HISTORY
 - BUG: :ArgsFilterDo fails with runtime error.
 - ENH: Add :ArgsFilterPattern specialization of :ArgsFilterDo.
 - BUG: Avoid "E16: Invalid range" on :ArgDrop on the last argument.
+- ENH: DWIM: :Args{Delete{Existing,FilesFromThisRoot},Filter{,Do,Pattern}}
+  automatically go to the next remaining argument if the current argument is
+  deleted.
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.048!__
 
