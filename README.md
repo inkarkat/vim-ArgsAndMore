@@ -141,9 +141,12 @@ USAGE
                             more than 100 lines:
                                 :ArgsFilterDo line('$') <= 100
 
-    :[range]ArgsFilterPattern[!] [{pattern}]
-                            Keeps (with [!]: drops) all arguments where {pattern}
-                            / the last search pattern matches in the buffer.
+    :[range]ArgsKeepMatchingBuffers[!] [{pattern}]
+                            Keep all arguments where {pattern} / the last search
+                            pattern matches in the buffer.
+    :[range]ArgsDeleteMatchingBuffers[!] [{pattern}]
+                            Delete all arguments where {pattern} / the last search
+                            pattern matches in the buffer.
 
     :[range]ArgsSort[!] [f][i][l][n][N]|{func-name}
                             Sort the argument list. [!] reverses the order; all
@@ -270,9 +273,9 @@ HISTORY
 - ENH: :ArgsSort maintains the currently active argument.
 - ENH: Add :ArgMerge command.
 - BUG: :ArgsFilterDo fails with runtime error.
-- ENH: Add :ArgsFilterPattern specialization of :ArgsFilterDo.
+- ENH: Add :Args{Keep,Delete}MatchingBuffers specializations of :ArgsFilterDo.
 - BUG: Avoid "E16: Invalid range" on :ArgDrop on the last argument.
-- ENH: DWIM: :Args{Delete{Existing,FilesFromThisRoot},Filter{,Do,Pattern}}
+- ENH: DWIM: :Args{Delete{Existing,FilesFromThisRoot},Filter[Do],{Keep,Delete}MatchingBuffers}
   automatically go to the next remaining argument if the current argument is
   deleted.
 
