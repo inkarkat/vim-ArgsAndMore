@@ -294,6 +294,7 @@ HISTORY							 *ArgsAndMore-history*
 - ENH: Add :ArgMerge command.
 - BUG: :ArgsFilterDo fails with runtime error.
 - ENH: Add :ArgsFilterPattern specialization of :ArgsFilterDo.
+- BUG: Avoid "E16: Invalid range" on :ArgDrop on the last argument.
   *** You need to update to ingo-library (vimscript #4433) version 1.048! ***
 
 2.20	03-Oct-2024

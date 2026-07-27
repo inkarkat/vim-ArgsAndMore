@@ -50,7 +50,8 @@ function! ArgsAndMore#Arg#Drop( bang, count ) abort
 
     try
 	execute '.' . (a:count > 1 ? ',.+' . (a:count - 1) : '') . 'argdelete'
-	execute (l:argIndex + 1) . 'argument' . a:bang
+	let l:targetArg = min([l:argIndex + 1, argc()])
+	execute l:targetArg . 'argument' . a:bang
 	return 1
     catch /^Vim\%((\a\+)\)\=:/
 	call ingo#err#SetVimException()
