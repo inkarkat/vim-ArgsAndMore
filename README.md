@@ -264,7 +264,7 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.30    RELEASEME
+##### 2.30    04-Aug-2026
 - ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
   #0000) version 1.00 or higher.
 - ENH: Add &lt;Leader&gt;la command for :ArgsList.
