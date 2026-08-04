@@ -114,6 +114,13 @@ USAGE							   *ArgsAndMore-usage*
 :ArgdoDeleteSuccessful	Delete those arguments from the argument list that
 			didn't cause any error messages during the last
 			|:Argdo| command.
+								   *:ArgMerge*
+:[count]ArgMerge [{name} ...]
+			Add the {name}s to the argument list, but only if they
+			aren't yet contained in the argument list (|:argadd|
+			doesn't check and requires a follow-up deduplication).
+			When {name} is omitted add the current buffer name to
+			the argument list.
 								    *:ArgDrop*
 :[N]ArgDrop[!] [N]	Delete the current [N] argument(s) from the argument
 			list and edit the next one instead. Complains when the
@@ -125,8 +132,12 @@ USAGE							   *ArgsAndMore-usage*
 			Delete any files from the argument list that do (with
 			[!]: not) exist in the file system (actually: can[not]
 			be read).
+						*:ArgsDeleteFilesFromThisRoot*
+:[range]ArgsDeleteFilesFromThisRoot[!]
+			Delete any files from the argument list that are (with
+			[!]: not) inside the current project root directory.
 								 *:ArgsFilter*
-:[range]ArgsFilter {expr}
+:[range]ArgsFilter[!] {expr}
 			Apply the |filter()| of {expr} to the files in the
 			argument list (i.e. values from |argv()|, referenced
 			as |v:val|), and keep only those where {expr} yields
@@ -143,7 +154,15 @@ USAGE							   *ArgsAndMore-usage*
 			For example, remove all arguments whose buffers have
 			more than 100 lines: >
 			    :ArgsFilterDo line('$') <= 100
-:[range]ArgsSort[!] [f][i][l][n][N]|{func-name}			   *:ArgsSort*
+<		      *:ArgsKeepMatchingBuffers* *:ArgsDeleteMatchingBuffers*
+:[range]ArgsKeepMatchingBuffers[!] [{pattern}]
+			Keep all arguments where {pattern} / the last search
+			pattern matches in the buffer.
+:[range]ArgsDeleteMatchingBuffers[!] [{pattern}]
+			Delete all arguments where {pattern} / the last search
+			pattern matches in the buffer.
+								   *:ArgsSort*
+:[range]ArgsSort[!] [f][i][l][n][N]|{func-name}
 			Sort the argument list. [!] reverses the order; all
 			other arguments like |sort()|.
 								*:ArgsNegated*
@@ -152,13 +171,18 @@ USAGE							   *ArgsAndMore-usage*
 			list and edit the first one.
 
 								   *:ArgsList*
-:[range]ArgsList[!]	List each argument number and filespec in a neat list
-			(not just one after the other as |:args|). With [!],
-			expand all arguments to absolute filespecs.
+:[range]ArgsList[!]	List each argument number, modification state, and
+			filespec in a neat list (not just one after the other
+			as |:args|). With [!], expand all arguments to
+			absolute filespecs.
 :[range]ArgsList[!] {glob}
-			List each argument number and filespec that matches
-			(with [!]: does not match) {glob} in a neat list.
+			List each argument number, modification state, and
+			filespec that matches (with [!]: does not match)
+			{glob} in a neat list.
 			Matching and printing is done to the full filespec.
+								  *<Leader>la*
+[count]<Leader>la	List each / the next [count] argument[s] (number,
+			modification state, and filespec) in a neat list.
 
 							     *:ArgsToQuickfix*
 :[range]ArgsToQuickfix	Show all arguments as a quickfix list.
@@ -216,8 +240,10 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					    *ArgsAndMore-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.043 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.048 or
   higher.
+- The :ArgsDeleteFilesFromThisRoot command requires the |VcsRoot.vim| plugin
+  (vimscript #0000), version 1.00 or higher.
 
 ==============================================================================
 CONFIGURATION					   *ArgsAndMore-configuration*
@@ -238,6 +264,11 @@ commands and overrule the default syntax suppression then. By default, this
 applies to the |:substitute| command with the |:s_c| flag; you can adapt the
 |pattern| to match other commands, too: >
     let g:ArgsAndMore_InteractiveCommandPattern = '...'
+<							   *ArgsAndMore-remap*
+If you want to use different mappings, map your keys to the
+<Plug>(ArgsAndMore...) mapping targets _before_ sourcing the script
+(e.g. in your |vimrc|): >
+    nmap <Leader>la <Plug>(ArgsAndMoreList)
 <
 ==============================================================================
 LIMITATIONS					     *ArgsAndMore-limitations*
@@ -255,6 +286,22 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 
 ==============================================================================
 HISTORY							 *ArgsAndMore-history*
+
+2.30	04-Aug-2026
+- ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
+  #0000) version 1.00 or higher.
+- ENH: Add <Leader>la command for :ArgsList.
+- UI: ENH: :ArgsList, :CList and :LList now also show the modification state
+  of each buffer with little sigils: + / - / =.
+- ENH: :ArgsSort maintains the currently active argument.
+- ENH: Add :ArgMerge command.
+- BUG: :ArgsFilterDo fails with runtime error.
+- ENH: Add :Args{Keep,Delete}MatchingBuffers specializations of :ArgsFilterDo.
+- BUG: Avoid "E16: Invalid range" on :ArgDrop on the last argument.
+- ENH: DWIM: :Args{Delete{Existing,FilesFromThisRoot},Filter[Do],{Keep,Delete}MatchingBuffers}
+  automatically go to the next remaining argument if the current argument is
+  deleted.
+  *** You need to update to ingo-library (vimscript #4433) version 1.048! ***
 
 2.20	03-Oct-2024
 - Add :ArgDrop command.
@@ -365,7 +412,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2024 Ingo Karkat
+Copyright: (C) 2012-2026 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>

@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2023 Ingo Karkat
+" Copyright: (C) 2015-2026 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -16,6 +16,9 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
 	return 0
     endif
 
+    let l:currentArg = (argv(argidx()) ==# expand('%') ? argidx() + 1 : 0)
+    let l:potentialTargetArg = (a:endArg < argc() ? a:endArg + 1 : 0)    " If there are arguments beyond the range, the first of them is the first tentative target argument (if all arguments after the current buffer are deleted).
+    let l:targetArg = 0
     let l:deletedArgs = []
     try
 	let l:filteredArgs = call(a:FilterGenerator, [a:bang, a:startArg, a:endArg, a:filterExpression])
@@ -23,12 +26,24 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
 	" To keep the indices valid, remove the arguments starting with the
 	" last argument.
 	for l:argIdx in range(len(l:filteredArgs) - 1, 0, -1)
-	    if ! l:filteredArgs[l:argIdx]
+	    if l:filteredArgs[l:argIdx]
+		let l:potentialTargetArg = l:argIdx + a:startArg " This argument remains and can become the new current argument if the current argument is deleted.
+	    else
 		call insert(l:deletedArgs, argv(l:argIdx), 0)
-		execute (l:argIdx + a:startArg) . 'argdelete'
+		let l:deleteArg = l:argIdx + a:startArg
+		execute l:deleteArg . 'argdelete'
+
+		let l:potentialTargetArg -= 1
+		let l:targetArg -= 1
+		if (l:deleteArg == l:currentArg)
+		    let l:targetArg = (l:potentialTargetArg > 0 ? l:potentialTargetArg : l:currentArg - 1)  " Use the next unfiltered following argument as the new current argument, or the previous argument if there is no following argument.
+		endif
 	    endif
 	endfor
-    catch /^Vim\%((\a\+)\)\=:/
+    catch /^ArgsAndMore:/
+	call ingo#err#SetCustomException('ArgsAndMore')
+	return 0
+    catch
 	call ingo#err#SetVimException()
 	return 0
     endtry
@@ -38,6 +53,15 @@ function! ArgsAndMore#Args#Filter( FilterGenerator, bang, startArg, endArg, filt
     else
 	let l:originalArgNum = a:endArg - a:startArg + 1
 	echo printf('Deleted %d of %d: %s', len(l:deletedArgs), l:originalArgNum, join(l:deletedArgs))
+
+	if l:targetArg > 0
+	    try
+		execute l:targetArg . 'argument' . a:bang
+	    catch /^Vim\%((\a\+)\)\=:/
+		call ingo#err#SetVimException()
+		return 0
+	    endtry
+	endif
     endif
     return 1
 endfunction
@@ -47,7 +71,7 @@ function! ArgsAndMore#Args#FilterDirect( bang, startArg, endArg, filterExpressio
 endfunction
 function! ArgsAndMore#Args#FilterIterate( bang, startArg, endArg, filterExpression )
     let s:filteredArgs = []
-    if ArgsAndMore#Iteration#Argdo(a:bang, a:startArg . ',' . a:endArg, printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
+    if ArgsAndMore#Iteration#Argdo(a:bang, a:startArg . ',' . a:endArg, '', printf('call ArgsAndMore#Args#FilterArg(%s)', string(a:filterExpression)), '')
 	let l:filteredArgs = s:filteredArgs
     else
 	let l:filteredArgs = [] " Return empty List on error, so that no filtering takes place.
@@ -64,6 +88,24 @@ function! ArgsAndMore#Args#FilterArg( filterExpression )
 	call ingo#msg#VimExceptionMsg()
 	throw 'ArgsAndMore: Aborted'
     endtry
+endfunction
+
+function! ArgsAndMore#Args#FilterMatchingBuffers( bang, startArg, endArg, isPatternInversion, pattern )
+    if empty(a:pattern)
+	if empty(@/)
+	    throw 'ArgsAndMore: No previous search pattern'
+	endif
+	let l:pattern = @/
+    else
+	let l:pattern = a:pattern
+    endif
+    return ArgsAndMore#Args#FilterIterate(a:bang, a:startArg, a:endArg, printf((a:isPatternInversion ? '!' : '') . 'ingo#search#IsBufferContains(%s)', string(l:pattern)))
+endfunction
+function! ArgsAndMore#Args#KeepMatchingBuffers( bang, startArg, endArg, pattern )
+    return ArgsAndMore#Args#FilterMatchingBuffers(a:bang, a:startArg, a:endArg, 0, a:pattern)
+endfunction
+function! ArgsAndMore#Args#DeleteMatchingBuffers( bang, startArg, endArg, pattern )
+    return ArgsAndMore#Args#FilterMatchingBuffers(a:bang, a:startArg, a:endArg, 1, a:pattern)
 endfunction
 
 
@@ -100,7 +142,7 @@ endfunction
 
 
 
-function! s:List( files, currentIdx, isBang, fileglob )
+function! s:List( files, startCnt, currentIdx, isBang, fileglob )
     let l:isFullPath = (! empty(a:fileglob) || a:isBang)
     if ! empty(a:fileglob)
 	let l:pattern = ingo#regexp#fromwildcard#AnchoredToPathBoundaries(a:fileglob)
@@ -116,6 +158,19 @@ function! s:List( files, currentIdx, isBang, fileglob )
 	    continue
 	endif
 
+	let l:bufnr = bufnr(l:filespec)
+	if l:bufnr == -1
+	    let l:sigil = '?'
+	elseif getbufvar(l:bufnr, '&modified')
+	    let l:sigil = '+'
+	elseif ! getbufvar(l:bufnr, '&modifiable')
+	    let l:sigil = '-'
+	elseif getbufvar(l:bufnr, '&readonly')
+	    let l:sigil = '='
+	else
+	    let l:sigil = ''
+	endif
+
 	if ! l:hasPrintedTitle
 	    let l:hasPrintedTitle = 1
 
@@ -123,12 +178,13 @@ function! s:List( files, currentIdx, isBang, fileglob )
 	    echo '   cnt	file'
 	    echohl None
 	endif
-	echo (l:fileIdx == a:currentIdx ? '*' : ' ') . printf('%3d', l:fileIdx + 1) . "\t" . l:filespec
+	echo printf("%1s%3d%3s\t%s", (l:fileIdx == a:currentIdx ? '*' : ''), a:startCnt + l:fileIdx, l:sigil, l:filespec)
     endfor
 endfunction
 function! ArgsAndMore#Args#List( startArg, endArg, isBang, fileglob )
     call s:List(
     \   argv()[a:startArg - 1 : a:endArg - 1],
+    \   a:startArg,
     \   argidx() - a:startArg + 1,
     \   a:isBang,
     \   a:fileglob
@@ -167,34 +223,9 @@ function! s:GetQuickfixFilespecs( list, existingFilespecs )
     return [len(l:addedBufnrs), l:filespecs]
 endfunction
 function! ArgsAndMore#Args#QuickfixList( list, isBang, fileglob )
-    call s:List(s:GetQuickfixFilespecs(a:list, [])[1], -1, a:isBang, a:fileglob)
+    call s:List(s:GetQuickfixFilespecs(a:list, [])[1], 1, -1, a:isBang, a:fileglob)
 endfunction
 
-function! s:ExecuteWithoutWildignore( excommand, filespecs )
-"*******************************************************************************
-"* PURPOSE:
-"   Executes a:excommand with all a:filespecs passed as arguments while
-"   'wildignore' is temporarily  disabled. This allows to introduce filespecs to
-"   the argument list (:args ..., :argadd ...) which would normally be filtered
-"   by 'wildignore'.
-"* ASSUMPTIONS / PRECONDITIONS:
-"	? List of any external variable, control, or other element whose state affects this procedure.
-"* EFFECTS / POSTCONDITIONS:
-"	? List of the procedure's effect on each external variable, control, or other element.
-"* INPUTS:
-"   a:excommand	    Ex command to be invoked
-"   a:filespecs	    List of filespecs.
-"* RETURN VALUES:
-"   none
-"*******************************************************************************
-    let l:save_wildignore = &wildignore
-    set wildignore=
-    try
-	execute a:excommand join(map(copy(a:filespecs), 'ingo#compat#fnameescape(v:val)'), ' ')
-    finally
-	let &wildignore = l:save_wildignore
-    endtry
-endfunction
 function! ArgsAndMore#Args#QuickfixToArgs( list, isArgAdd, count, bang )
     if empty(a:list)
 	call ingo#msg#ErrorMsg('No items')
@@ -211,7 +242,7 @@ function! ArgsAndMore#Args#QuickfixToArgs( list, isArgAdd, count, bang )
 	echo printf('No new arguments in %d unique item%s', l:quickfixBufferCnt, (l:quickfixBufferCnt == 1 ? '' : 's'))
     else
 	let l:command = (a:isArgAdd ? (a:count ? a:count : '') . 'argadd' : 'args' . a:bang)
-	call s:ExecuteWithoutWildignore(l:command, l:filespecs)
+	call ingo#wildignore#ExecuteWithout(l:command, l:filespecs)
 	echo printf('%d file%s%s: %s', len(l:filespecs), (len(l:filespecs) == 1 ? '' : 's'), (a:isArgAdd ? ' added' : ''), join(l:filespecs))
     endif
 endfunction
@@ -221,6 +252,12 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
     if a:endArg == 0
 	call ingo#err#Set('No arguments')
 	return 0
+    endif
+
+    let l:currentArg = argidx() + 1
+    let l:currentArgAndFilespec = ''
+    if argidx() < argc() && l:currentArg >= a:startArg && l:currentArg <= a:endArg
+	let l:currentArgAndFilespec = fnamemodify(argv(argidx()), ':p')
     endif
 
     let l:sortedFilespecs = sort(
@@ -233,8 +270,30 @@ function! ArgsAndMore#Args#Sort( isReverse, startArg, endArg, how )
 	let l:sortedFilespecs = reverse(l:sortedFilespecs)
     endif
 
-    silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
-    call s:ExecuteWithoutWildignore((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+    if empty(l:currentArgAndFilespec)
+	silent execute printf('%s,%dargdelete', a:startArg, a:endArg)
+	call ingo#wildignore#ExecuteWithout((a:startArg - 1) . 'argadd', l:sortedFilespecs)
+    else
+	" We need to replace "around" the current argument, so that it remains the
+	" current argument after sorting.
+	" (Simply relocating it and using :{N}argument to make it the current argument
+	" again would fail in case of unpersisted changes to the buffer.)
+	let l:currentArgSortedIdx = index(l:sortedFilespecs, l:currentArgAndFilespec)
+	if l:currentArgSortedIdx == -1 | throw 'ASSERT: Current filespec is found in sorted list' | endif
+
+	if l:currentArg < a:endArg
+	    silent execute printf('%d,%dargdelete', l:currentArg + 1, a:endArg)
+	endif
+	if l:currentArgSortedIdx < len(l:sortedFilespecs) - 1
+	    call ingo#wildignore#ExecuteWithout(l:currentArg . 'argadd', l:sortedFilespecs[l:currentArgSortedIdx + 1 :])
+	endif
+	if l:currentArg > a:startArg
+	    silent execute printf('%d,%dargdelete', a:startArg, l:currentArg - 1)
+	endif
+	if l:currentArgSortedIdx > 0
+	    call ingo#wildignore#ExecuteWithout((a:startArg - 1) . 'argadd', l:sortedFilespecs[0 : l:currentArgSortedIdx - 1])
+	endif
+    endif
     echo printf('%d file%s sorted', len(l:sortedFilespecs), (len(l:sortedFilespecs) == 1 ? '' : 's'))
     return 1
 endfunction

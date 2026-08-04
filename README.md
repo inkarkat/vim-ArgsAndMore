@@ -101,6 +101,13 @@ USAGE
                             didn't cause any error messages during the last
                             :Argdo command.
 
+    :[count]ArgMerge [{name} ...]
+                            Add the {name}s to the argument list, but only if they
+                            aren't yet contained in the argument list (:argadd
+                            doesn't check and requires a follow-up deduplication).
+                            When {name} is omitted add the current buffer name to
+                            the argument list.
+
     :[N]ArgDrop[!] [N]      Delete the current [N] argument(s) from the argument
                             list and edit the next one instead. Complains when the
                             current file is not contained in the argument list
@@ -112,7 +119,11 @@ USAGE
                             [!]: not) exist in the file system (actually: can[not]
                             be read).
 
-    :[range]ArgsFilter {expr}
+    :[range]ArgsDeleteFilesFromThisRoot[!]
+                            Delete any files from the argument list that are (with
+                            [!]: not) inside the current project root directory.
+
+    :[range]ArgsFilter[!] {expr}
                             Apply the filter() of {expr} to the files in the
                             argument list (i.e. values from argv(), referenced
                             as v:val), and keep only those where {expr} yields
@@ -129,6 +140,14 @@ USAGE
                             For example, remove all arguments whose buffers have
                             more than 100 lines:
                                 :ArgsFilterDo line('$') <= 100
+
+    :[range]ArgsKeepMatchingBuffers[!] [{pattern}]
+                            Keep all arguments where {pattern} / the last search
+                            pattern matches in the buffer.
+    :[range]ArgsDeleteMatchingBuffers[!] [{pattern}]
+                            Delete all arguments where {pattern} / the last search
+                            pattern matches in the buffer.
+
     :[range]ArgsSort[!] [f][i][l][n][N]|{func-name}
                             Sort the argument list. [!] reverses the order; all
                             other arguments like sort().
@@ -137,13 +156,18 @@ USAGE
                             Define all files except {arglist} as the new argument
                             list and edit the first one.
 
-    :[range]ArgsList[!]     List each argument number and filespec in a neat list
-                            (not just one after the other as :args). With [!],
-                            expand all arguments to absolute filespecs.
+    :[range]ArgsList[!]     List each argument number, modification state, and
+                            filespec in a neat list (not just one after the other
+                            as :args). With [!], expand all arguments to
+                            absolute filespecs.
     :[range]ArgsList[!] {glob}
-                            List each argument number and filespec that matches
-                            (with [!]: does not match) {glob} in a neat list.
+                            List each argument number, modification state, and
+                            filespec that matches (with [!]: does not match)
+                            {glob} in a neat list.
                             Matching and printing is done to the full filespec.
+
+    [count]<Leader>la       List each / the next [count] argument[s] (number,
+                            modification state, and filespec) in a neat list.
 
     :[range]ArgsToQuickfix  Show all arguments as a quickfix list.
 
@@ -200,8 +224,10 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.043 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.048 or
   higher.
+- The :ArgsDeleteFilesFromThisRoot command requires the VcsRoot.vim plugin
+  (unreleased), version 1.00 or higher.
 
 CONFIGURATION
 ------------------------------------------------------------------------------
@@ -223,6 +249,12 @@ pattern to match other commands, too:
 
     let g:ArgsAndMore_InteractiveCommandPattern = '...'
 
+If you want to use different mappings, map your keys to the
+&lt;Plug&gt;(ArgsAndMore...) mapping targets _before_ sourcing the script
+(e.g. in your vimrc):
+
+    nmap <Leader>la <Plug>(ArgsAndMoreList)
+
 CONTRIBUTING
 ------------------------------------------------------------------------------
 
@@ -231,6 +263,23 @@ https://github.com/inkarkat/vim-ArgsAndMore/issues or email (address below).
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 2.30    04-Aug-2026
+- ENH: Add :ArgsDeleteFilesFromThisRoot command. Requires VcsRoot.vim (vimscript
+  #0000) version 1.00 or higher.
+- ENH: Add &lt;Leader&gt;la command for :ArgsList.
+- UI: ENH: :ArgsList, :CList and :LList now also show the modification state
+  of each buffer with little sigils: + / - / =.
+- ENH: :ArgsSort maintains the currently active argument.
+- ENH: Add :ArgMerge command.
+- BUG: :ArgsFilterDo fails with runtime error.
+- ENH: Add :Args{Keep,Delete}MatchingBuffers specializations of :ArgsFilterDo.
+- BUG: Avoid "E16: Invalid range" on :ArgDrop on the last argument.
+- ENH: DWIM: :Args{Delete{Existing,FilesFromThisRoot},Filter[Do],{Keep,Delete}MatchingBuffers}
+  automatically go to the next remaining argument if the current argument is
+  deleted.
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.048!__
 
 ##### 2.20    03-Oct-2024
 - Add :ArgDrop command.
@@ -350,7 +399,7 @@ __You need to separately
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2012-2024 Ingo Karkat -
+Copyright: (C) 2012-2026 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
